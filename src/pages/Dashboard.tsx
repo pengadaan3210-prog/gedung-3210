@@ -38,6 +38,9 @@ const Dashboard = () => {
         <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
         <p className="text-sm text-muted-foreground mt-1">
           Ringkasan progres pembangunan Gedung Kantor BPS Kabupaten Majalengka Tahun 2026
+=======
+          Ringkasan progres pembangunan Gedung Kantor BPS Kabupaten Majalengka
+>>>>>>> 4d737005464f0583c7782b1547443f20dbdf20d8
         </p>
       </div>
 

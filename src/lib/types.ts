@@ -3,8 +3,8 @@ export type StatusProgres = "Belum" | "Proses" | "Selesai" | "Tertunda";
 
 export interface Kegiatan {
   id: string;
-  penyedia?: string;
-  tahapan: Tahapan;
+  penyedia: Tahapan;  // Kunci utama: Perencanaan, Pelaksanaan, Pengawasan
+  tahapan: string;    // Deskripsi tahapan teknis
   uraianKegiatan: string;
   output: string;
   tanggalMulai: string;
