@@ -19,38 +19,61 @@ async function fetchSheetsData(sheets?: string[]): Promise<SheetsData> {
   const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
   
   if (!projectId || !anonKey) {
-    throw new Error('Supabase credentials are not configured. Please check your .env file.');
+    const missingVars = [];
+    if (!projectId) missingVars.push('VITE_SUPABASE_PROJECT_ID');
+    if (!anonKey) missingVars.push('VITE_SUPABASE_PUBLISHABLE_KEY');
+    throw new Error(
+      `❌ Missing environment variables: ${missingVars.join(', ')}. Please check your .env file.`
+    );
   }
 
   try {
-    const res = await fetch(
-      `https://${projectId}.supabase.co/functions/v1/get-sheets-data${params}`,
-      {
-        headers: {
-          'Authorization': `Bearer ${anonKey}`,
-          'apikey': anonKey,
-        },
-      }
-    );
+    const url = `https://${projectId}.supabase.co/functions/v1/get-sheets-data${params}`;
+    console.log(`🔗 Fetching from: ${url}`);
+    
+    const res = await fetch(url, {
+      headers: {
+        'Authorization': `Bearer ${anonKey}`,
+        'apikey': anonKey,
+      },
+    });
 
     if (!res.ok) {
-      const err = await res.text();
-      const errorMsg = res.status === 401 
-        ? 'Authentication failed. Check your Supabase credentials.'
+      let errorMsg = '';
+      let errorDetails = '';
+      
+      try {
+        const errorData = await res.json();
+        errorMsg = errorData.error || `HTTP ${res.status}`;
+        errorDetails = errorData.details;
+      } catch {
+        errorMsg = await res.text();
+      }
+
+      const statusSpecificMsg = 
+        res.status === 401 
+          ? '❌ Authentication failed. Check your Supabase credentials in .env'
         : res.status === 404
-        ? 'Sheets data endpoint not found.'
+          ? '❌ Sheets API endpoint not found. Has the Supabase function been deployed?'
         : res.status === 500
-        ? 'Server error. Please try again later.'
-        : `Failed to fetch sheets data: ${err}`;
-      throw new Error(errorMsg);
+          ? `❌ Server error in Sheets API. Check Supabase function logs: ${errorMsg}`
+        : `❌ API Error (${res.status}): ${errorMsg}`;
+
+      console.error(statusSpecificMsg);
+      if (errorDetails) console.error('Details:', errorDetails);
+      
+      throw new Error(statusSpecificMsg);
     }
 
-    return res.json();
+    const data = await res.json();
+    console.log('✅ Sheets data fetched successfully:', data);
+    return data;
   } catch (error) {
     if (error instanceof Error) {
+      console.error('Error fetching sheets:', error.message);
       throw error;
     }
-    throw new Error('An unexpected error occurred while fetching sheets data.');
+    throw new Error('❌ An unexpected error occurred while fetching sheets data.');
   }
 }
 

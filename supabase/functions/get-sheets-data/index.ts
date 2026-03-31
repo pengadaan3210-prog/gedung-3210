@@ -60,18 +60,37 @@ async function getAccessToken(serviceAccount: any): Promise<string> {
 
 async function fetchSheet(accessToken: string, sheetName: string): Promise<string[][]> {
   const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${encodeURIComponent(sheetName)}`;
-  const res = await fetch(url, {
-    headers: { Authorization: `Bearer ${accessToken}` },
-  });
+  
+  try {
+    const res = await fetch(url, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
 
-  if (!res.ok) {
-    const err = await res.text();
-    console.error(`Failed to fetch sheet "${sheetName}": ${err}`);
+    if (!res.ok) {
+      const err = await res.text();
+      console.error(`❌ Failed to fetch sheet "${sheetName}": ${res.status} ${res.statusText}`);
+      console.error(`   Response: ${err}`);
+      
+      // More detailed error logging
+      if (res.status === 404) {
+        console.error(`   → Sheet "${sheetName}" not found in spreadsheet`);
+      } else if (res.status === 403) {
+        console.error(`   → Permission denied. Check service account access to spreadsheet.`);
+      } else if (res.status === 401) {
+        console.error(`   → Authentication failed. Check GOOGLE_SERVICE_ACCOUNT_JSON.`);
+      }
+      
+      return [];
+    }
+
+    const data = await res.json();
+    const rows = data.values || [];
+    console.log(`✅ Successfully fetched sheet "${sheetName}": ${rows.length} rows`);
+    return rows;
+  } catch (error) {
+    console.error(`❌ Network error fetching "${sheetName}":`, error);
     return [];
   }
-
-  const data = await res.json();
-  return data.values || [];
 }
 
 function sheetToObjects(rows: string[][]): Record<string, string>[] {
@@ -177,13 +196,22 @@ serve(async (req) => {
   }
 
   try {
+    console.log('\n📋 === GET-SHEETS-DATA REQUEST ===');
+    console.log(`⏰ Timestamp: ${new Date().toISOString()}`);
+    console.log(`🔗 Spreadsheet ID: ${SPREADSHEET_ID}`);
+
     const saJson = Deno.env.get('GOOGLE_SERVICE_ACCOUNT_JSON');
     if (!saJson) {
-      throw new Error('GOOGLE_SERVICE_ACCOUNT_JSON not configured');
+      console.error('❌ GOOGLE_SERVICE_ACCOUNT_JSON is not configured in Supabase secrets');
+      throw new Error('GOOGLE_SERVICE_ACCOUNT_JSON not configured. Please set it in Supabase dashboard');
     }
+    console.log('✅ Service account credentials found');
 
     const serviceAccount = JSON.parse(saJson);
+    console.log(`✅ Service account email: ${serviceAccount.client_email}`);
+    
     const accessToken = await getAccessToken(serviceAccount);
+    console.log('✅ Google Sheets API access token acquired');
 
     // Parse requested sheets from query param, default all
     const url = new URL(req.url);
@@ -192,6 +220,8 @@ serve(async (req) => {
       ? sheetsParam.split(',')
       : ['Kegiatan', 'Visualisasi', 'Dokumentasi', 'Notulen', 'Foto_Progres'];
 
+    console.log(`📊 Requesting ${requestedSheets.length} sheets: ${requestedSheets.join(', ')}`);
+
     const result: Record<string, any> = {};
 
     const sheetPromises = requestedSheets.map(async (sheet) => {
@@ -199,25 +229,57 @@ serve(async (req) => {
       const objects = sheetToObjects(rows);
 
       switch (sheet) {
-        case 'Kegiatan': result.kegiatan = mapKegiatan(objects); break;
-        case 'Visualisasi': result.visualisasi = mapVisualisasi(objects); break;
-        case 'Dokumentasi': result.dokumentasi = mapDokumentasi(objects); break;
-        case 'Notulen': result.notulen = mapNotulen(objects); break;
-        case 'Foto_Progres': result.fotoProgres = mapFotoProgres(objects); break;
-        default: result[sheet] = objects;
+        case 'Kegiatan': 
+          result.kegiatan = mapKegiatan(objects);
+          console.log(`   → Kegiatan: ${objects.length} records mapped`);
+          break;
+        case 'Visualisasi': 
+          result.visualisasi = mapVisualisasi(objects);
+          console.log(`   → Visualisasi: ${objects.length} records mapped`);
+          break;
+        case 'Dokumentasi': 
+          result.dokumentasi = mapDokumentasi(objects);
+          console.log(`   → Dokumentasi: ${objects.length} records mapped`);
+          break;
+        case 'Notulen': 
+          result.notulen = mapNotulen(objects);
+          console.log(`   → Notulen: ${objects.length} records mapped`);
+          break;
+        case 'Foto_Progres': 
+          result.fotoProgres = mapFotoProgres(objects);
+          console.log(`   → Foto Progres: ${objects.length} records mapped`);
+          break;
+        default: 
+          result[sheet] = objects;
       }
     });
 
     await Promise.all(sheetPromises);
 
+    console.log(`✅ Successfully processed all sheets`);
+    console.log('📤 === RESPONSE READY ===\n');
+
     return new Response(JSON.stringify(result), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
-    console.error('Error:', error);
+    const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+    console.error('\n❌ === ERROR ===');
+    console.error(`Error: ${errorMsg}`);
+    console.error('📋 Stack:', error instanceof Error ? error.stack : 'No stack trace');
+    console.error('====\n');
+    
     return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      JSON.stringify({ 
+        error: errorMsg,
+        details: error instanceof Error ? error.stack : undefined,
+        timestamp: new Date().toISOString(),
+        spreadsheetId: SPREADSHEET_ID,
+      }),
+      { 
+        status: 500, 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      }
     );
   }
 });

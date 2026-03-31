@@ -5,10 +5,18 @@ import { Cuboid, Play, Image } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 
 const Visualisasi = () => {
-  const { data, isLoading, isError, refetch } = useVisualisasi();
+  const { data, isLoading, isError, error, refetch } = useVisualisasi();
 
   if (isLoading) return <div className="p-6"><LoadingState /></div>;
-  if (isError) return <div className="p-6"><ErrorState onRetry={() => refetch()} /></div>;
+  if (isError) return (
+    <div className="p-6">
+      <ErrorState 
+        message="Gagal memuat data Visualisasi"
+        error={error as Error | null}
+        onRetry={() => refetch()} 
+      />
+    </div>
+  );
 
   const videos = data.filter((d) => d.tipe === "Video").sort((a, b) => a.urutan - b.urutan);
   const models = data.filter((d) => d.tipe === "Model3D").sort((a, b) => a.urutan - b.urutan);
