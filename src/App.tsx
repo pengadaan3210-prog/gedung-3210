@@ -26,6 +26,26 @@ const App = () => (
             <Route path="/" element={<Dashboard />} />
             <Route path="/visualisasi" element={<Visualisasi />} />
             <Route
+              path="/semua"
+              element={
+                <KegiatanPage
+                  tahapan="Semua"
+                  title="Semua Kegiatan"
+                  description="Daftar semua kegiatan dari semua penyedia"
+                />
+              }
+            />
+            <Route
+              path="/bps-kabupaten"
+              element={
+                <KegiatanPage
+                  tahapan="BPS Kabupaten Majalengka"
+                  title="BPS Kabupaten Majalengka"
+                  description="Daftar kegiatan oleh BPS Kabupaten Majalengka"
+                />
+              }
+            />
+            <Route
               path="/perancangan"
               element={
                 <KegiatanPage
@@ -40,7 +60,7 @@ const App = () => (
               element={
                 <KegiatanPage
                   tahapan="Pelaksanaan"
-                  title="Konstruksi"
+                  title="Kontraktor Pelaksana"
                   description="Daftar kegiatan pelaksanaan konstruksi oleh kontraktor"
                 />
               }

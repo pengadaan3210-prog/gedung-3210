@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { useKegiatan } from "@/hooks/useSheetsData";
-import { Kegiatan, Tahapan } from "@/lib/types";
+import { Kegiatan } from "@/lib/types";
 import DataTable from "@/components/DataTable";
 import DetailModal from "@/components/DetailModal";
 import LoadingState from "@/components/LoadingState";
 import ErrorState from "@/components/ErrorState";
 
 interface KegiatanPageProps {
-  tahapan: Tahapan;
+  tahapan: string;
   title: string;
   description: string;
 }
@@ -15,7 +15,13 @@ interface KegiatanPageProps {
 const KegiatanPage = ({ tahapan, title, description }: KegiatanPageProps) => {
   const [selected, setSelected] = useState<Kegiatan | null>(null);
   const { data: allData, isLoading, isError, refetch } = useKegiatan();
-  const data = allData.filter((d) => d.penyedia === tahapan);  // Filter by penyedia instead of tahapan
+  
+  // Filter data based on tahapan
+  const data = tahapan === "Semua" 
+    ? allData 
+    : tahapan === "BPS Kabupaten Majalengka"
+    ? allData.filter((d) => d.penanggungjawab === "BPS Kabupaten Majalengka" || d.penyedia === "BPS Kabupaten Majalengka")
+    : allData.filter((d) => d.penyedia === tahapan);
 
   if (isLoading) return <div className="p-6"><LoadingState /></div>;
   if (isError) return <div className="p-6"><ErrorState onRetry={() => refetch()} /></div>;

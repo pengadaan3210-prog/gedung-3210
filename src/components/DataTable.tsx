@@ -41,17 +41,32 @@ const getProgressGradientColor = (percentage: number): string => {
   return `rgb(${r}, ${g}, ${b})`;
 };
 
-// Get solid background color for tahapan badges
-const getTahapanBadgeClass = (tahapan: string): string => {
-  // Warna amber tegas untuk badge
-  return 'text-amber-700 font-bold';
+// Get color for tahapan badges based on penanggungjawab/penyedia
+const getTahapanBadgeClass = (item: Kegiatan): string => {
+  // Check penanggungjawab first
+  if (item.penanggungjawab === "BPS Kabupaten Majalengka" || item.penanggungjawab?.includes("BPS")) {
+    return 'text-blue-700 font-bold';  // Biru
+  }
+  
+  // Then check penyedia
+  if (item.penyedia === "Perencanaan") {
+    return 'text-amber-700 font-bold';  // Gold
+  } else if (item.penyedia === "Pengawasan") {
+    return 'text-green-700 font-bold';  // Hijau
+  } else if (item.penyedia === "Pelaksanaan") {
+    return 'text-orange-600 font-bold';  // Orange
+  }
+  
+  return 'text-amber-700 font-bold';  // Default
 };
 
 const DataTable = ({ data, onSelect }: DataTableProps) => {
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("");
   const [selectedDetail, setSelectedDetail] = useState<Kegiatan | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const ROWS_PER_PAGE = 10;
+  const STATUS_OPTIONS: string[] = ["Semua", "Belum", "Proses", "Selesai", "Tertunda"];
 
   const sorted = useMemo(() => {
     let result = [...data];
@@ -66,6 +81,11 @@ const DataTable = ({ data, onSelect }: DataTableProps) => {
       );
     }
 
+    // Filter by status (from column H: statusProgres)
+    if (statusFilter && statusFilter !== "Semua") {
+      result = result.filter((d) => d.statusProgres.trim() === statusFilter.trim());
+    }
+
     // Sort by urutan field, or by id if urutan not available
     result.sort((a, b) => {
       const aUrutan = a.urutan ?? 999;
@@ -74,7 +94,7 @@ const DataTable = ({ data, onSelect }: DataTableProps) => {
     });
 
     return result;
-  }, [data, search]);
+  }, [data, search, statusFilter]);
 
   // Pagination logic
   const totalPages = Math.ceil(sorted.length / ROWS_PER_PAGE);
@@ -84,6 +104,15 @@ const DataTable = ({ data, onSelect }: DataTableProps) => {
 
   const handlePageChange = (page: number) => {
     setCurrentPage(Math.max(1, Math.min(page, totalPages)));
+  };
+
+  const handleStatusToggle = (status: string) => {
+    if (status === "Semua") {
+      setStatusFilter("");
+    } else {
+      setStatusFilter(statusFilter === status ? "" : status);
+    }
+    setCurrentPage(1); // Reset to first page on filter change
   };
 
   const formatDateRange = (startDate: string, endDate: string) => {
@@ -109,6 +138,24 @@ const DataTable = ({ data, onSelect }: DataTableProps) => {
         />
       </div>
 
+      {/* Status Filter */}
+      <div className="flex flex-wrap gap-2">
+        <span className="text-xs font-semibold text-muted-foreground self-center">Status:</span>
+        {STATUS_OPTIONS.map((status) => (
+          <button
+            key={status}
+            onClick={() => handleStatusToggle(status)}
+            className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
+              (status === "Semua" && statusFilter === "") || statusFilter === status
+                ? 'bg-primary text-primary-foreground border-primary'
+                : 'bg-muted text-muted-foreground border-border hover:bg-muted/80'
+            }`}
+          >
+            {status}
+          </button>
+        ))}
+      </div>
+
       <div className="rounded-lg border border-border overflow-x-auto">
         <Table>
           <TableHeader>
@@ -129,11 +176,11 @@ const DataTable = ({ data, onSelect }: DataTableProps) => {
             {paginatedData.map((item) => (
               <TableRow 
                 key={item.id} 
-                className="hover:bg-muted/50 transition-colors cursor-pointer"
+                className="hover:bg-muted/50 transition-colors cursor-pointer h-auto"
                 onClick={() => setSelectedDetail(item)}
               >
                 <TableCell>
-                  <span className={`${getTahapanBadgeClass(item.tahapan)} text-xs`}>
+                  <span className={`${getTahapanBadgeClass(item)} text-xs`}>
                     {item.tahapan}
                   </span>
                 </TableCell>
@@ -141,7 +188,7 @@ const DataTable = ({ data, onSelect }: DataTableProps) => {
                   {item.penanggungjawab || '-'}
                 </TableCell>
                 <TableCell 
-                  className="font-medium text-sm max-w-[250px]"
+                  className="font-medium text-sm max-w-[250px] truncate"
                   title={item.uraianKegiatan}
                 >
                   {item.uraianKegiatan.length > 50 
@@ -149,7 +196,9 @@ const DataTable = ({ data, onSelect }: DataTableProps) => {
                     : item.uraianKegiatan
                   }
                 </TableCell>
-                <TableCell className="text-sm">{item.output}</TableCell>
+                <TableCell className="text-sm max-w-[180px] truncate" title={item.output}>
+                  {item.output || '-'}
+                </TableCell>
                 <TableCell className="text-sm whitespace-nowrap">
                   {formatDateRange(item.tanggalMulai, item.tanggalSelesai)}
                 </TableCell>

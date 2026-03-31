@@ -119,11 +119,19 @@ function sheetToObjects(rows: string[][]): Record<string, string>[] {
     console.log(`   📍 Column U (index 20): Raw="${rawHeaders[20]}" → Normalized="${headers[20]}"`);
   }
   
-  return rows.slice(1).map((row) => {
+  // Filter out rows where all cells are empty
+  const dataRows = rows.slice(1).filter(row => row.some(cell => cell && cell.trim() !== ''));
+  console.log(`   📊 Data rows (after filtering empty): ${dataRows.length}`);
+  
+  return dataRows.map((row, idx) => {
     const obj: Record<string, string> = {};
     headers.forEach((h, i) => {
       obj[h] = row[i] || '';
     });
+    // Use existing ID or generate from index
+    if (!obj.id || obj.id.trim() === '') {
+      obj.id = `row_${idx + 1}`;
+    }
     return obj;
   });
 }
@@ -149,7 +157,7 @@ function mapKegiatan(raw: Record<string, string>[]) {
     });
   }
   
-  return raw.map((r) => ({
+  const mapped = raw.map((r) => ({
     id: r.id || '',
     penyedia: (r.penyedia || '').toLowerCase() === 'perencanaan' ? 'Perencanaan' : 
               (r.penyedia || '').toLowerCase() === 'pelaksanaan' ? 'Pelaksanaan' : 
@@ -159,7 +167,7 @@ function mapKegiatan(raw: Record<string, string>[]) {
     output: r.output || '',
     tanggalMulai: parseDate(r.tanggal_mulai),
     tanggalSelesai: parseDate(r.tanggal_selesai),
-    statusProgres: r.status_progres || 'Belum',
+    statusProgres: (r.status_progres || 'Belum').trim(),
     persentaseProgres: parseInt(r.persentase_progres) || 0,
     peranPenyedia: r.peran_penyedia || '',
     pic: r.pic || '',
@@ -176,6 +184,18 @@ function mapKegiatan(raw: Record<string, string>[]) {
     urutan: parseInt(r.urutan) || 0,
     penanggungjawab: r.penanggungjawab || '',
   }));
+  
+  // Remove duplicates by ID
+  const uniqueMap = new Map<string, any>();
+  mapped.forEach(item => {
+    if (!uniqueMap.has(item.id)) {
+      uniqueMap.set(item.id, item);
+    }
+  });
+  
+  const result = Array.from(uniqueMap.values());
+  console.log(`   ✨ Kegiatan deduplicated: ${mapped.length} → ${result.length} unique records`);
+  return result;
 }
 
 function mapVisualisasi(raw: Record<string, string>[]) {
