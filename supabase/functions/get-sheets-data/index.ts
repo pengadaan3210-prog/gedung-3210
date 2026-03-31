@@ -93,9 +93,26 @@ async function fetchSheet(accessToken: string, sheetName: string): Promise<strin
   }
 }
 
+// Normalize header name by extracting just the field name (before parenthesis)
+// "tipe (Video / Model3D / Gambar)" -> "tipe"
+// "url (link YouTube/embed/gambar)" -> "url"
+function normalizeHeader(header: string): string {
+  return header
+    .trim()
+    .split('(')[0]
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, '_');
+}
+
 function sheetToObjects(rows: string[][]): Record<string, string>[] {
   if (rows.length < 2) return [];
-  const headers = rows[0];
+  const rawHeaders = rows[0];
+  const headers = rawHeaders.map(normalizeHeader);
+  
+  console.log(`   📊 Headers (raw): [${rawHeaders.join(', ')}]`);
+  console.log(`   📊 Headers (normalized): [${headers.join(', ')}]`);
+  
   return rows.slice(1).map((row) => {
     const obj: Record<string, string> = {};
     headers.forEach((h, i) => {
