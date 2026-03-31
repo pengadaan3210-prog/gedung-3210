@@ -4,3 +4,43 @@ import { twMerge } from "tailwind-merge";
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
+
+// Extract file ID from Google Drive sharing URL
+// Supports: /d/{id}/, ?id={id}, /open?id={id}, /file/d/{id}/, etc.
+export function extractGoogleDriveFileId(url: string): string | null {
+  if (!url) return null;
+
+  // Pattern 1: /file/d/{id}/ or /d/{id}/ or /d/{id}/view
+  const pattern1 = /\/d\/([a-zA-Z0-9_-]+)/;
+  const match1 = url.match(pattern1);
+  if (match1?.[1]) return match1[1];
+
+  // Pattern 2: ?id={id}
+  const pattern2 = /[?&]id=([a-zA-Z0-9_-]+)/;
+  const match2 = url.match(pattern2);
+  if (match2?.[1]) return match2[1];
+
+  return null;
+}
+
+// Convert Google Drive URL to embed preview URL
+// Returns preview URL that can be embedded
+export function getGoogleDriveEmbedUrl(url: string): string | null {
+  const fileId = extractGoogleDriveFileId(url);
+  if (!fileId) return null;
+
+  // For videos and documents, use /preview endpoint
+  return `https://drive.google.com/file/d/${fileId}/preview`;
+}
+
+// Check if URL is a Google Drive URL
+export function isGoogleDriveUrl(url: string): boolean {
+  return url && url.includes('drive.google.com');
+}
+
+// Get display URL for opening in new tab (for documents)
+export function getGoogleDriveViewUrl(url: string): string | null {
+  const fileId = extractGoogleDriveFileId(url);
+  if (!fileId) return null;
+  return `https://drive.google.com/file/d/${fileId}/view`;
+}
