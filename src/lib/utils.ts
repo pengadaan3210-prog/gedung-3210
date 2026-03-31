@@ -44,3 +44,14 @@ export function getGoogleDriveViewUrl(url: string): string | null {
   if (!fileId) return null;
   return `https://drive.google.com/file/d/${fileId}/view`;
 }
+
+// Get direct image URL from Google Drive (for image preview)
+// Converts sharing link to direct accessible image thumbnail
+export function getGoogleDriveImageUrl(url: string): string | null {
+  const fileId = extractGoogleDriveFileId(url);
+  if (!fileId) return null;
+  
+  // Use Google Drive's thumbnail endpoint - this works without authentication
+  // sz parameter: w400, w500, w1000 etc for different sizes
+  return `https://drive.google.com/thumbnail?id=${fileId}&sz=w1000`;
+}

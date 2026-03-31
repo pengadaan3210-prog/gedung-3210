@@ -1,17 +1,21 @@
+import { useState } from "react";
 import { useVisualisasi } from "@/hooks/useSheetsData";
 import LoadingState from "@/components/LoadingState";
 import ErrorState from "@/components/ErrorState";
-import { Cuboid, Play, Image, ExternalLink, FileText } from "lucide-react";
+import { Cuboid, Play, Image, ExternalLink, FileText, X } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { 
   isGoogleDriveUrl, 
   getGoogleDriveEmbedUrl,
-  getGoogleDriveViewUrl 
+  getGoogleDriveViewUrl,
+  getGoogleDriveImageUrl
 } from "@/lib/utils";
 
 const Visualisasi = () => {
   const { data, isLoading, isError, error, refetch } = useVisualisasi();
+  const [selectedImage, setSelectedImage] = useState<any>(null);
 
   if (isLoading) return <div className="p-6"><LoadingState /></div>;
   if (isError) return (
@@ -173,51 +177,111 @@ const Visualisasi = () => {
       <div>
         <h2 className="text-lg font-bold text-foreground mb-4">Galeri Desain</h2>
         {images.length > 0 ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {images.map((img) => {
-              const isGDriveUrl = isGoogleDriveUrl(img.url);
-              const viewUrl = isGDriveUrl ? getGoogleDriveViewUrl(img.url) : img.url;
-              
-              return (
-                <Card key={img.id} className="shadow-sm border-border overflow-hidden hover:shadow-md transition-shadow group">
-                  <CardContent className="p-0">
-                    {img.url ? (
-                      <a href={viewUrl} target="_blank" rel="noopener noreferrer" className="block relative overflow-hidden">
-                        {isGDriveUrl ? (
-                          <div className="aspect-square bg-muted flex items-center justify-center group-hover:bg-muted/80 transition-colors">
-                            <div className="text-center space-y-2">
-                              <FileText className="h-8 w-8 text-muted-foreground/60 mx-auto" />
-                              <p className="text-xs font-medium text-muted-foreground">Lihat di Drive</p>
-                            </div>
-                          </div>
-                        ) : (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {images.map((img) => {
+                const isGDriveUrl = isGoogleDriveUrl(img.url);
+                const imageUrl = isGDriveUrl ? getGoogleDriveImageUrl(img.url) : img.url;
+                const viewUrl = isGDriveUrl ? getGoogleDriveViewUrl(img.url) : img.url;
+                
+                return (
+                  <Card key={img.id} className="shadow-md border-border overflow-hidden hover:shadow-lg transition-all duration-300 group cursor-pointer" onClick={() => setSelectedImage(img)}>
+                    <CardContent className="p-0">
+                      {imageUrl ? (
+                        <div className="relative overflow-hidden bg-black/50 aspect-square flex items-center justify-center group-hover:bg-black/40 transition-colors">
                           <img 
-                            src={img.url} 
+                            src={imageUrl} 
                             alt={img.judul} 
-                            className="aspect-square object-cover w-full group-hover:scale-105 transition-transform"
+                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                            onError={(e) => {
+                              // Fallback if image fails to load
+                              e.currentTarget.style.display = 'none';
+                            }}
                           />
-                        )}
-                      </a>
-                    ) : (
-                      <div className="aspect-square bg-muted flex items-center justify-center">
-                        <Image className="h-8 w-8 text-muted-foreground/40" />
+                          <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                            <Button size="sm" variant="secondary" onClick={(e) => { e.stopPropagation(); setSelectedImage(img); }}>
+                              <Play className="h-3 w-3 mr-1" />
+                              Preview
+                            </Button>
+                            {viewUrl && (
+                              <Button size="sm" variant="secondary" onClick={(e) => { e.stopPropagation(); window.open(viewUrl, '_blank'); }}>
+                                <ExternalLink className="h-3 w-3" />
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="aspect-square bg-muted flex items-center justify-center">
+                          <Image className="h-12 w-12 text-muted-foreground/40" />
+                        </div>
+                      )}
+                      <div className="p-3 space-y-1">
+                        <p className="text-xs font-semibold text-foreground line-clamp-2">{img.judul}</p>
+                        {img.deskripsi && <p className="text-xs text-muted-foreground line-clamp-1">{img.deskripsi}</p>}
+                        {img.kategori && <div><span className="inline-block text-xs px-2 py-1 bg-primary/10 text-primary rounded font-medium">{img.kategori}</span></div>}
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+
+            {/* Preview Modal */}
+            <Dialog open={!!selectedImage} onOpenChange={(open) => !open && setSelectedImage(null)}>
+              <DialogContent className="max-w-4xl w-full h-auto max-h-[90vh] overflow-y-auto">
+                {selectedImage && (
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h2 className="text-xl font-bold text-foreground">{selectedImage.judul}</h2>
+                      <button onClick={() => setSelectedImage(null)} className="text-muted-foreground hover:text-foreground">
+                        <X className="h-6 w-6" />
+                      </button>
+                    </div>
+                    
+                    {selectedImage.deskripsi && (
+                      <p className="text-sm text-muted-foreground">{selectedImage.deskripsi}</p>
+                    )}
+
+                    {selectedImage.kategori && (
+                      <div className="flex gap-2">
+                        <span className="text-xs px-3 py-1 bg-primary/20 text-primary rounded-full font-medium">{selectedImage.kategori}</span>
                       </div>
                     )}
-                    <div className="p-2">
-                      <p className="text-xs font-medium text-foreground truncate">{img.judul}</p>
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
+
+                    {isGoogleDriveUrl(selectedImage.url) ? (
+                      <div className="space-y-4">
+                        {/* Check if it's likely an image by looking at the file */}
+                        <img 
+                          src={getGoogleDriveImageUrl(selectedImage.url)} 
+                          alt={selectedImage.judul} 
+                          className="w-full rounded-lg"
+                          onError={() => {
+                            // Fallback UI if image fails to load
+                          }}
+                        />
+                        <Button 
+                          onClick={() => window.open(getGoogleDriveViewUrl(selectedImage.url), '_blank')} 
+                          className="w-full gap-2"
+                        >
+                          <ExternalLink className="h-4 w-4" />
+                          Buka di Google Drive
+                        </Button>
+                      </div>
+                    ) : (
+                      <img src={selectedImage.url} alt={selectedImage.judul} className="w-full rounded-lg" />
+                    )}
+                  </div>
+                )}
+              </DialogContent>
+            </Dialog>
+          </>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {Array.from({ length: 4 }).map((_, i) => (
-              <Card key={i} className="shadow-sm border-border overflow-hidden">
+              <Card key={i} className="shadow-md border-border overflow-hidden">
                 <CardContent className="p-0">
                   <div className="aspect-square bg-muted flex items-center justify-center">
-                    <Image className="h-8 w-8 text-muted-foreground/40" />
+                    <Image className="h-12 w-12 text-muted-foreground/40" />
                   </div>
                 </CardContent>
               </Card>
