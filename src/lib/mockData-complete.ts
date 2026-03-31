@@ -5,29 +5,6 @@
 
 import { Kegiatan, Visualisasi, Dokumentasi, Notulen, FotoProgres } from "./types";
 
-export const mockKegiatan: Kegiatan[] = [
-  {
-    id: "keg-001",
-    tahapan: "Perencanaan",
-    uraianKegiatan: "Penyusunan DED (Detail Engineering Design)",
-    output: "Dokumen DED lengkap",
-    tanggalMulai: "2024-01-15",
-    tanggalSelesai: "2024-03-15",
-    statusProgres: "Selesai",
-    persentaseProgres: 100,
-    peranPenyedia: "Konsultan Perencana",
-    pic: "Ir. Ahmad Fauzi",
-    peranBPSKabupaten: "Review & persetujuan",
-    peranBPSProvinsi: "Konsultasi teknis",
-    peranPusat: "Persetujuan anggaran",
-    linkBuktiDukung: "https://drive.google.com/example1",
-    keterangan: "DED telah disetujui",
-    tindakLanjut: "-",
-    nomorKontrak: "KTR/PLAN/001/2024",
-    tanggalUpdateTerakhir: "2024-03-15",
-  },
-];
-
 export const mockVisualisasi: Visualisasi[] = [
   {
     id: "vis-001",

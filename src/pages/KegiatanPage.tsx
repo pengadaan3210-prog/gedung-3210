@@ -17,11 +17,12 @@ const KegiatanPage = ({ tahapan, title, description }: KegiatanPageProps) => {
   const { data: allData, isLoading, isError, refetch } = useKegiatan();
   
   // Filter data based on tahapan
-  const data = tahapan === "Semua" 
-    ? allData 
-    : tahapan === "BPS Kabupaten Majalengka"
-    ? allData.filter((d) => d.penanggungjawab === "BPS Kabupaten Majalengka" || d.penyedia === "BPS Kabupaten Majalengka")
-    : allData.filter((d) => d.penyedia === tahapan);
+  const normalize = (val?: string) => (val || "").trim().toLowerCase();
+  const data = tahapan === "Semua"
+    ? allData
+    : normalize(tahapan) === "bps kabupaten majalengka"
+    ? allData.filter((d) => normalize(d.penanggungjawab) === "bps kabupaten majalengka" || normalize(d.penyedia) === "bps kabupaten majalengka")
+    : allData.filter((d) => normalize(d.penyedia) === normalize(tahapan));
 
   if (isLoading) return <div className="p-6"><LoadingState /></div>;
   if (isError) return <div className="p-6"><ErrorState onRetry={() => refetch()} /></div>;
