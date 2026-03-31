@@ -1,3 +1,7 @@
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { SheetsData } from "@/lib/types";
+
 /**
  * Fetches data from Supabase Functions get-sheets-data endpoint
  * 
@@ -10,54 +14,8 @@
  */
 async function fetchSheetsData(sheets?: string[]): Promise<SheetsData> {
   const params = sheets ? `?sheets=${sheets.join(",")}` : "";
-  
   const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
   const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-  
-  const url = `https://${projectId}.supabase.co/functions/v1/get-sheets-data${params}`;
-  console.log('Fetching from:', url);
-  
-  try {
-    const res = await fetch(
-      url,
-      {
-        headers: {
-          'Authorization': `Bearer ${anonKey}`,
-          'apikey': anonKey,
-        },
-      }
-    );
-
-    console.log('Response status:', res.status);
-    console.log('Response headers:', {
-      contentType: res.headers.get('content-type'),
-      contentLength: res.headers.get('content-length'),
-    });
-
-    const text = await res.text();
-    console.log('Raw response text:', text.substring(0, 500));
-
-    if (!res.ok) {
-      console.error('API Error (status:', res.status, '):', text);
-      throw new Error(`Failed to fetch sheets data (${res.status}): ${text.substring(0, 200)}`);
-    }
-
-    // Try to parse JSON, with better error handling
-    if (!text || text.trim() === '') {
-      console.error('Empty response from API');
-      throw new Error('Empty response from API');
-    }
-
-    const data = JSON.parse(text);
-    console.log('Fetched data:', data);
-    return data;
-  } catch (error) {
-    console.error('Fetch error:', error);
-    throw error;
-  }
-}
-
-=======
   if (!projectId || !anonKey) {
     const missingVars = [];
     if (!projectId) missingVars.push('VITE_SUPABASE_PROJECT_ID');
@@ -66,22 +24,18 @@ async function fetchSheetsData(sheets?: string[]): Promise<SheetsData> {
       `❌ Missing environment variables: ${missingVars.join(', ')}. Please check your .env file.`
     );
   }
-
   try {
     const url = `https://${projectId}.supabase.co/functions/v1/get-sheets-data${params}`;
     console.log(`🔗 Fetching from: ${url}`);
-    
     const res = await fetch(url, {
       headers: {
         'Authorization': `Bearer ${anonKey}`,
         'apikey': anonKey,
       },
     });
-
     if (!res.ok) {
       let errorMsg = '';
       let errorDetails = '';
-      
       try {
         const errorData = await res.json();
         errorMsg = errorData.error || `HTTP ${res.status}`;
@@ -89,7 +43,6 @@ async function fetchSheetsData(sheets?: string[]): Promise<SheetsData> {
       } catch {
         errorMsg = await res.text();
       }
-
       const statusSpecificMsg = 
         res.status === 401 
           ? '❌ Authentication failed. Check your Supabase credentials in .env'
@@ -98,13 +51,10 @@ async function fetchSheetsData(sheets?: string[]): Promise<SheetsData> {
         : res.status === 500
           ? `❌ Server error in Sheets API. Check Supabase function logs: ${errorMsg}`
         : `❌ API Error (${res.status}): ${errorMsg}`;
-
       console.error(statusSpecificMsg);
       if (errorDetails) console.error('Details:', errorDetails);
-      
       throw new Error(statusSpecificMsg);
     }
-
     const data = await res.json();
     console.log('✅ Sheets data fetched successfully:', data);
     return data;
@@ -117,17 +67,6 @@ async function fetchSheetsData(sheets?: string[]): Promise<SheetsData> {
   }
 }
 
-
-/**
- * Generic hook for fetching sheets data from Supabase Functions
- * 
- * @param sheets - Optional array of sheet names to fetch
- * @returns Query object with data, isLoading, isError, and refetch function
- * 
- * @example
- * const { data, isLoading, isError, refetch } = useSheetsData(['Kegiatan']);
- */
->>>>>>> 4d737005464f0583c7782b1547443f20dbdf20d8
 export function useSheetsData(sheets?: string[]) {
   return useQuery({
     queryKey: ["sheets-data", sheets],
@@ -137,88 +76,31 @@ export function useSheetsData(sheets?: string[]) {
   });
 }
 
-<<<<<<< HEAD
-=======
-/**
- * Hook for fetching Kegiatan (Activities) data
- * 
- * @returns Object with kegiatan array and query state (isLoading, isError, refetch)
- * 
- * @example
- * const { data, isLoading, isError } = useKegiatan();
- * // data is an array of Kegiatan objects
- */
->>>>>>> 4d737005464f0583c7782b1547443f20dbdf20d8
 export function useKegiatan() {
   const { data, ...rest } = useSheetsData(["Kegiatan"]);
   return { data: data?.kegiatan || [], ...rest };
 }
 
-<<<<<<< HEAD
-export function useVisualisasi() {
-  const { data, error, ...rest } = useSheetsData(["Visualisasi"]);
-  return { data: data?.visualisasi || [], error, ...rest };
-}
-
-=======
-/**
- * Hook for fetching Visualisasi (Visualization) data
- * 
- * @returns Object with visualisasi array and query state
- */
 export function useVisualisasi() {
   const { data, ...rest } = useSheetsData(["Visualisasi"]);
   return { data: data?.visualisasi || [], ...rest };
 }
 
-/**
- * Hook for fetching Dokumentasi (Documentation) data
- * 
- * @returns Object with dokumentasi array and query state
- */
->>>>>>> 4d737005464f0583c7782b1547443f20dbdf20d8
 export function useDokumentasi() {
   const { data, ...rest } = useSheetsData(["Dokumentasi"]);
   return { data: data?.dokumentasi || [], ...rest };
 }
 
-<<<<<<< HEAD
-=======
-/**
- * Hook for fetching Notulen (Meeting Minutes) data
- * 
- * @returns Object with notulen array and query state
- */
->>>>>>> 4d737005464f0583c7782b1547443f20dbdf20d8
 export function useNotulen() {
   const { data, ...rest } = useSheetsData(["Notulen"]);
   return { data: data?.notulen || [], ...rest };
 }
 
-<<<<<<< HEAD
-=======
-/**
- * Hook for fetching Foto Progres (Progress Photos) data
- * 
- * @returns Object with fotoProgres array and query state
- */
->>>>>>> 4d737005464f0583c7782b1547443f20dbdf20d8
 export function useFotoProgres() {
   const { data, ...rest } = useSheetsData(["Foto_Progres"]);
   return { data: data?.fotoProgres || [], ...rest };
 }
 
-<<<<<<< HEAD
-=======
-/**
- * Hook for fetching all sheets data at once
- * 
- * @returns Object with all sheets data and query state
- * @example
- * const { data } = useAllSheetsData();
- * // data contains: kegiatan, visualisasi, dokumentasi, notulen, fotoProgres
- */
->>>>>>> 4d737005464f0583c7782b1547443f20dbdf20d8
 export function useAllSheetsData() {
   return useSheetsData();
 }
