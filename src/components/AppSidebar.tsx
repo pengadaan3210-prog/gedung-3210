@@ -117,7 +117,7 @@ export function AppSidebar() {
       <SidebarFooter className="border-t border-sidebar-border px-4 py-3">
         {!collapsed && (
           <p className="text-[10px] text-sidebar-foreground/40 text-center">
-            © 2024 BPS Kab. Majalengka
+            © 2026 BPS Kab. Majalengka
           </p>
         )}
       </SidebarFooter>

@@ -151,7 +151,9 @@ function mapKegiatan(raw: Record<string, string>[]) {
   
   return raw.map((r) => ({
     id: r.id || '',
-    penyedia: r.penyedia || '',
+    penyedia: (r.penyedia || '').toLowerCase() === 'perencanaan' ? 'Perencanaan' : 
+              (r.penyedia || '').toLowerCase() === 'pelaksanaan' ? 'Pelaksanaan' : 
+              (r.penyedia || '').toLowerCase() === 'pengawasan' ? 'Pengawasan' : 'Perencanaan',
     tahapan: r.tahapan || '',
     uraianKegiatan: r.uraian_kegiatan || '',
     output: r.output || '',

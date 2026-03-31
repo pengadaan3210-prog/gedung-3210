@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Search, Eye, ExternalLink } from "lucide-react";
+import { Search, Eye, ExternalLink, ChevronLeft, ChevronRight } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 interface DataTableProps {
@@ -41,9 +41,17 @@ const getProgressGradientColor = (percentage: number): string => {
   return `rgb(${r}, ${g}, ${b})`;
 };
 
+// Get solid background color for tahapan badges
+const getTahapanBadgeClass = (tahapan: string): string => {
+  // Warna amber tegas untuk badge
+  return 'text-amber-700 font-bold';
+};
+
 const DataTable = ({ data, onSelect }: DataTableProps) => {
   const [search, setSearch] = useState("");
   const [selectedDetail, setSelectedDetail] = useState<Kegiatan | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const ROWS_PER_PAGE = 10;
 
   const sorted = useMemo(() => {
     let result = [...data];
@@ -68,6 +76,16 @@ const DataTable = ({ data, onSelect }: DataTableProps) => {
     return result;
   }, [data, search]);
 
+  // Pagination logic
+  const totalPages = Math.ceil(sorted.length / ROWS_PER_PAGE);
+  const startIdx = (currentPage - 1) * ROWS_PER_PAGE;
+  const endIdx = startIdx + ROWS_PER_PAGE;
+  const paginatedData = sorted.slice(startIdx, endIdx);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(Math.max(1, Math.min(page, totalPages)));
+  };
+
   const formatDateRange = (startDate: string, endDate: string) => {
     const start = new Date(startDate);
     const end = new Date(endDate);
@@ -83,7 +101,10 @@ const DataTable = ({ data, onSelect }: DataTableProps) => {
         <Input 
           placeholder="Cari kegiatan, PIC, atau tahapan..." 
           value={search} 
-          onChange={(e) => setSearch(e.target.value)} 
+          onChange={(e) => {
+            setSearch(e.target.value);
+            setCurrentPage(1);  // Reset to first page on search
+          }} 
           className="pl-9" 
         />
       </div>
@@ -99,20 +120,35 @@ const DataTable = ({ data, onSelect }: DataTableProps) => {
               <TableHead className="font-semibold min-w-[150px]">Kendala</TableHead>
               <TableHead className="font-semibold min-w-[150px]">Solusi</TableHead>
               <TableHead className="font-semibold min-w-[150px]">Tindak Lanjut</TableHead>
-              <TableHead className="font-semibold">PIC Pelaksana</TableHead>
+              <TableHead className="font-semibold min-w-[120px]">PIC Pelaksana</TableHead>
+              <TableHead className="font-semibold min-w-[140px]">Peran BPS Provinsi</TableHead>
               <TableHead className="font-semibold text-center w-16">Aksi</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {sorted.map((item) => (
-              <TableRow key={item.id} className="hover:bg-muted/50 transition-colors">
+            {paginatedData.map((item) => (
+              <TableRow 
+                key={item.id} 
+                className="hover:bg-muted/50 transition-colors cursor-pointer"
+                onClick={() => setSelectedDetail(item)}
+              >
                 <TableCell>
-                  <Badge variant="outline" className="text-xs font-medium">{item.tahapan}</Badge>
+                  <span className={`${getTahapanBadgeClass(item.tahapan)} text-xs`}>
+                    {item.tahapan}
+                  </span>
                 </TableCell>
                 <TableCell className="text-sm max-w-[120px] truncate" title={item.penanggungjawab || '-'}>
                   {item.penanggungjawab || '-'}
                 </TableCell>
-                <TableCell className="font-medium text-sm">{item.uraianKegiatan}</TableCell>
+                <TableCell 
+                  className="font-medium text-sm max-w-[250px]"
+                  title={item.uraianKegiatan}
+                >
+                  {item.uraianKegiatan.length > 50 
+                    ? `${item.uraianKegiatan.substring(0, 50)}...` 
+                    : item.uraianKegiatan
+                  }
+                </TableCell>
                 <TableCell className="text-sm">{item.output}</TableCell>
                 <TableCell className="text-sm whitespace-nowrap">
                   {formatDateRange(item.tanggalMulai, item.tanggalSelesai)}
@@ -143,19 +179,30 @@ const DataTable = ({ data, onSelect }: DataTableProps) => {
                   {item.tindakLanjut || '-'}
                 </TableCell>
                 <TableCell className="text-sm font-medium">{item.pic}</TableCell>
+                <TableCell className="text-sm max-w-[140px] truncate" title={item.peranBPSProvinsi || '-'}>
+                  {item.peranBPSProvinsi || '-'}
+                </TableCell>
                 <TableCell className="text-center">
                   <div className="flex items-center justify-center gap-1">
                     <Button
                       variant="ghost"
                       size="sm"
                       className="h-8 w-8 p-0"
-                      onClick={() => setSelectedDetail(item)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedDetail(item);
+                      }}
                       title="Lihat detail"
                     >
                       <Eye className="h-4 w-4" />
                     </Button>
                     {item.linkBuktiDukung && (
-                      <a href={item.linkBuktiDukung} target="_blank" rel="noopener noreferrer">
+                      <a 
+                        href={item.linkBuktiDukung} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                      >
                         <Button
                           variant="ghost"
                           size="sm"
@@ -172,7 +219,7 @@ const DataTable = ({ data, onSelect }: DataTableProps) => {
             ))}
             {sorted.length === 0 && (
               <TableRow>
-                <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={11} className="text-center py-8 text-muted-foreground">
                   Tidak ada data ditemukan
                 </TableCell>
               </TableRow>
@@ -181,123 +228,198 @@ const DataTable = ({ data, onSelect }: DataTableProps) => {
         </Table>
       </div>
 
-      <div className="text-sm text-muted-foreground">
-        Menampilkan {sorted.length} kegiatan
-      </div>
+      {/* Pagination */}
+      {sorted.length > 0 && (
+        <div className="flex items-center justify-between text-sm text-muted-foreground">
+          <div>
+            Menampilkan {startIdx + 1}-{Math.min(endIdx, sorted.length)} dari {sorted.length} kegiatan
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+              className="h-8 w-8 p-0"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+              <Button
+                key={page}
+                variant={currentPage === page ? "default" : "outline"}
+                size="sm"
+                onClick={() => handlePageChange(page)}
+                className="h-8 w-8 p-0"
+              >
+                {page}
+              </Button>
+            ))}
+            
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className="h-8 w-8 p-0"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      )}
 
       <Dialog open={!!selectedDetail} onOpenChange={(open) => !open && setSelectedDetail(null)}>
-        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           {selectedDetail && (
             <>
-              <DialogHeader>
-                <DialogTitle className="text-lg">{selectedDetail.uraianKegiatan}</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-5">
-                {/* Header Info */}
-                <div className="grid grid-cols-3 gap-4 pb-3 border-b">
-                  <div>
-                    <p className="text-xs font-semibold text-muted-foreground uppercase">Tahapan</p>
-                    <Badge className="mt-1.5">{selectedDetail.tahapan}</Badge>
+              <DialogHeader className="border-b pb-3">
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Badge className="w-fit">{selectedDetail.penyedia}</Badge>
+                    <span className="text-xs text-muted-foreground">•</span>
+                    <span className="text-xs text-muted-foreground font-medium">{selectedDetail.tahapan}</span>
                   </div>
-                  <div>
-                    <p className="text-xs font-semibold text-muted-foreground uppercase">Status</p>
-                    <Badge className={`${statusVariant(selectedDetail.statusProgres)} text-xs border mt-1.5`}>
+                  <DialogTitle className="text-base font-semibold text-foreground">{selectedDetail.uraianKegiatan}</DialogTitle>
+                </div>
+              </DialogHeader>
+
+              <div className="space-y-4">
+                {/* Status Bar */}
+                <div className="grid grid-cols-4 gap-3">
+                  <div className="text-center p-2 bg-muted/50 rounded">
+                    <p className="text-xs text-muted-foreground uppercase mb-1">Status</p>
+                    <Badge className={`${statusVariant(selectedDetail.statusProgres)} text-xs border w-full justify-center`}>
                       {selectedDetail.statusProgres}
                     </Badge>
                   </div>
-                  <div>
-                    <p className="text-xs font-semibold text-muted-foreground uppercase">Progress</p>
-                    <p className="mt-1.5 text-sm font-semibold">{selectedDetail.persentaseProgres}%</p>
+                  <div className="text-center p-2 bg-muted/50 rounded">
+                    <p className="text-xs text-muted-foreground uppercase mb-1">Progress</p>
+                    <p className="text-sm font-bold">{selectedDetail.persentaseProgres}%</p>
+                  </div>
+                  <div className="text-center p-2 bg-muted/50 rounded">
+                    <p className="text-xs text-muted-foreground uppercase mb-1">PIC</p>
+                    <p className="text-xs font-medium truncate">{selectedDetail.pic.split(' ')[0]}</p>
+                  </div>
+                  <div className="text-center p-2 bg-muted/50 rounded">
+                    <p className="text-xs text-muted-foreground uppercase mb-1">Kontrak</p>
+                    <p className="text-xs font-medium truncate">{selectedDetail.nomorKontrak?.slice(-4) || '-'}</p>
                   </div>
                 </div>
 
-                {/* PIC & Kontrak */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-xs font-semibold text-muted-foreground uppercase">PIC Pelaksana</p>
-                    <p className="mt-1.5 text-sm font-medium">{selectedDetail.pic}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs font-semibold text-muted-foreground uppercase">Penanggungjawab</p>
-                    <p className="mt-1.5 text-sm">{selectedDetail.penanggungjawab || '-'}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs font-semibold text-muted-foreground uppercase">Nomor Kontrak</p>
-                    <p className="mt-1.5 text-sm">{selectedDetail.nomorKontrak || '-'}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs font-semibold text-muted-foreground uppercase">Output</p>
-                    <p className="mt-1.5 text-sm">{selectedDetail.output || '-'}</p>
-                  </div>
+                {/* Output */}
+                <div>
+                  <p className="text-xs font-semibold text-muted-foreground uppercase mb-2">Output</p>
+                  <p className="text-sm p-2 bg-muted/30 rounded border">{selectedDetail.output || '-'}</p>
                 </div>
 
                 {/* Jadwal */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-xs font-semibold text-muted-foreground uppercase">Tanggal Mulai</p>
-                    <p className="mt-1.5 text-sm font-medium">
-                      {new Date(selectedDetail.tanggalMulai).toLocaleDateString("id-ID", 
-                        { day: "2-digit", month: "short", year: "numeric" })}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-xs font-semibold text-muted-foreground uppercase">Tanggal Selesai</p>
-                    <p className="mt-1.5 text-sm font-medium">
-                      {new Date(selectedDetail.tanggalSelesai).toLocaleDateString("id-ID",
-                        { day: "2-digit", month: "short", year: "numeric" })}
-                    </p>
+                <div>
+                  <p className="text-xs font-semibold text-muted-foreground uppercase mb-2">Jadwal Pelaksanaan</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="text-sm p-2 bg-muted/30 rounded">
+                      <p className="text-xs text-muted-foreground mb-1">Mulai</p>
+                      <p className="font-medium">
+                        {new Date(selectedDetail.tanggalMulai).toLocaleDateString("id-ID", 
+                          { day: "2-digit", month: "short", year: "numeric" })}
+                      </p>
+                    </div>
+                    <div className="text-sm p-2 bg-muted/30 rounded">
+                      <p className="text-xs text-muted-foreground mb-1">Selesai</p>
+                      <p className="font-medium">
+                        {new Date(selectedDetail.tanggalSelesai).toLocaleDateString("id-ID",
+                          { day: "2-digit", month: "short", year: "numeric" })}
+                      </p>
+                    </div>
                   </div>
                 </div>
 
-                {/* Kendala & Solusi */}
-                <div className="space-y-3">
+                {/* PIC & Peran */}
+                <div>
+                  <p className="text-xs font-semibold text-muted-foreground uppercase mb-2">Tim</p>
+                  <div className="space-y-1.5 text-sm">
+                    <div className="flex justify-between p-1.5 bg-muted/20 rounded">
+                      <span className="text-muted-foreground">PIC Pelaksana:</span>
+                      <span className="font-medium">{selectedDetail.pic}</span>
+                    </div>
+                    <div className="flex justify-between p-1.5 bg-muted/20 rounded">
+                      <span className="text-muted-foreground">Penanggungjawab:</span>
+                      <span className="font-medium">{selectedDetail.penanggungjawab || '-'}</span>
+                    </div>
+                    <div className="flex justify-between p-1.5 bg-muted/20 rounded">
+                      <span className="text-muted-foreground">Penyedia:</span>
+                      <span className="font-medium">{selectedDetail.peranPenyedia || '-'}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Kendala Solusi */}
+                <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <p className="text-xs font-semibold text-muted-foreground uppercase mb-1.5">Kendala</p>
-                    <p className="text-sm p-2 bg-destructive/5 rounded border border-destructive/10">
+                    <p className="text-xs font-semibold text-muted-foreground uppercase mb-2">Kendala</p>
+                    <p className="text-sm p-2 bg-destructive/5 rounded border border-destructive/10 min-h-[60px]">
                       {selectedDetail.kendala || '-'}
                     </p>
                   </div>
                   <div>
-                    <p className="text-xs font-semibold text-muted-foreground uppercase mb-1.5">Solusi</p>
-                    <p className="text-sm p-2 bg-success/5 rounded border border-success/10">
+                    <p className="text-xs font-semibold text-muted-foreground uppercase mb-2">Solusi</p>
+                    <p className="text-sm p-2 bg-success/5 rounded border border-success/10 min-h-[60px]">
                       {selectedDetail.solusi || '-'}
                     </p>
                   </div>
                 </div>
 
                 {/* Tindak Lanjut & Keterangan */}
-                <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <p className="text-xs font-semibold text-muted-foreground uppercase mb-1.5">Tindak Lanjut</p>
-                    <p className="text-sm p-2 bg-muted/50 rounded">{selectedDetail.tindakLanjut || '-'}</p>
+                    <p className="text-xs font-semibold text-muted-foreground uppercase mb-2">Tindak Lanjut</p>
+                    <p className="text-sm p-2 bg-muted/30 rounded border min-h-[60px]">{selectedDetail.tindakLanjut || '-'}</p>
                   </div>
                   <div>
-                    <p className="text-xs font-semibold text-muted-foreground uppercase mb-1.5">Keterangan</p>
-                    <p className="text-sm p-2 bg-muted/50 rounded">{selectedDetail.keterangan || '-'}</p>
+                    <p className="text-xs font-semibold text-muted-foreground uppercase mb-2">Keterangan</p>
+                    <p className="text-sm p-2 bg-muted/30 rounded border min-h-[60px]">{selectedDetail.keterangan || '-'}</p>
                   </div>
                 </div>
 
-                {/* Peran Details */}
-                <div className="text-xs space-y-1.5 p-3 bg-muted/30 rounded">
-                  <p className="font-semibold text-muted-foreground uppercase mb-2">Peran</p>
-                  <div className="grid grid-cols-2 gap-2">
-                    <p><span className="font-medium">Penyedia:</span> {selectedDetail.peranPenyedia || '-'}</p>
-                    <p><span className="font-medium">BPS Kab:</span> {selectedDetail.peranBPSKabupaten || '-'}</p>
-                    <p><span className="font-medium">BPS Prov:</span> {selectedDetail.peranBPSProvinsi || '-'}</p>
-                    <p><span className="font-medium">Pusat:</span> {selectedDetail.peranPusat || '-'}</p>
+                {/* Additional Info */}
+                {(selectedDetail.peranBPSKabupaten || selectedDetail.peranBPSProvinsi || selectedDetail.peranPusat || selectedDetail.keterangan) && (
+                  <div className="text-xs space-y-1.5 p-2 bg-muted/20 rounded">
+                    {selectedDetail.peranBPSKabupaten && (
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">BPS Kabupaten:</span>
+                        <span>{selectedDetail.peranBPSKabupaten}</span>
+                      </div>
+                    )}
+                    {selectedDetail.peranBPSProvinsi && (
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">BPS Provinsi:</span>
+                        <span>{selectedDetail.peranBPSProvinsi}</span>
+                      </div>
+                    )}
+                    {selectedDetail.peranPusat && (
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Pusat:</span>
+                        <span>{selectedDetail.peranPusat}</span>
+                      </div>
+                    )}
+                    {selectedDetail.keterangan && (
+                      <div className="border-t pt-1.5">
+                        <p className="text-muted-foreground mb-1">Keterangan: {selectedDetail.keterangan}</p>
+                      </div>
+                    )}
                   </div>
-                </div>
+                )}
 
-                {/* Document Links */}
+                {/* Document Link */}
                 {selectedDetail.linkBuktiDukung && (
-                  <Button 
-                    onClick={() => window.open(selectedDetail.linkBuktiDukung, '_blank')} 
-                    className="w-full"
-                    size="sm"
+                  <button
+                    onClick={() => window.open(selectedDetail.linkBuktiDukung, '_blank')}
+                    className="w-full px-3 py-2 bg-primary text-primary-foreground rounded font-medium text-sm hover:bg-primary/90 transition-colors flex items-center justify-center gap-2"
                   >
-                    <ExternalLink className="h-4 w-4 mr-2" />
+                    <ExternalLink className="h-4 w-4" />
                     Buka Bukti Dukung
-                  </Button>
+                  </button>
                 )}
               </div>
             </>

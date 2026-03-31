@@ -15,7 +15,7 @@ interface KegiatanPageProps {
 const KegiatanPage = ({ tahapan, title, description }: KegiatanPageProps) => {
   const [selected, setSelected] = useState<Kegiatan | null>(null);
   const { data: allData, isLoading, isError, refetch } = useKegiatan();
-  const data = allData.filter((d) => d.tahapan === tahapan);
+  const data = allData.filter((d) => d.penyedia === tahapan);  // Filter by penyedia instead of tahapan
 
   if (isLoading) return <div className="p-6"><LoadingState /></div>;
   if (isError) return <div className="p-6"><ErrorState onRetry={() => refetch()} /></div>;
