@@ -3,6 +3,7 @@ export type StatusProgres = "Belum" | "Proses" | "Selesai" | "Tertunda";
 
 export interface Kegiatan {
   id: string;
+  penyedia?: string;
   tahapan: Tahapan;
   uraianKegiatan: string;
   output: string;
@@ -20,6 +21,10 @@ export interface Kegiatan {
   tindakLanjut: string;
   nomorKontrak: string;
   tanggalUpdateTerakhir: string;
+  kendala?: string;
+  solusi?: string;
+  urutan?: number;
+  penanggungjawab?: string;
 }
 
 export interface Visualisasi {

@@ -110,8 +110,14 @@ function sheetToObjects(rows: string[][]): Record<string, string>[] {
   const rawHeaders = rows[0];
   const headers = rawHeaders.map(normalizeHeader);
   
+  console.log(`   📊 Total columns: ${rawHeaders.length}`);
   console.log(`   📊 Headers (raw): [${rawHeaders.join(', ')}]`);
   console.log(`   📊 Headers (normalized): [${headers.join(', ')}]`);
+  
+  // Debug: Show column U specifically (index 20)
+  if (rawHeaders.length > 20) {
+    console.log(`   📍 Column U (index 20): Raw="${rawHeaders[20]}" → Normalized="${headers[20]}"`);
+  }
   
   return rows.slice(1).map((row) => {
     const obj: Record<string, string> = {};
@@ -134,8 +140,18 @@ function parseDate(dateStr: string): string {
 }
 
 function mapKegiatan(raw: Record<string, string>[]) {
+  console.log(`   🔍 Mapping ${raw.length} kegiatan records...`);
+  if (raw.length > 0) {
+    console.log(`   🔍 First row keys: [${Object.keys(raw[0]).join(', ')}]`);
+    console.log(`   🔍 Sample penanggungjawab values:`);
+    raw.slice(0, 3).forEach((r, i) => {
+      console.log(`      Row ${i}: penanggungjawab="${r.penanggungjawab || '(empty)'}"`);
+    });
+  }
+  
   return raw.map((r) => ({
     id: r.id || '',
+    penyedia: r.penyedia || '',
     tahapan: r.tahapan || '',
     uraianKegiatan: r.uraian_kegiatan || '',
     output: r.output || '',
@@ -153,6 +169,10 @@ function mapKegiatan(raw: Record<string, string>[]) {
     tindakLanjut: r.tindak_lanjut || '',
     nomorKontrak: r.nomor_kontrak || '',
     tanggalUpdateTerakhir: parseDate(r.tanggal_update_terakhir),
+    kendala: r.kendala || '',
+    solusi: r.solusi || '',
+    urutan: parseInt(r.urutan) || 0,
+    penanggungjawab: r.penanggungjawab || '',
   }));
 }
 
