@@ -5,6 +5,24 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+export const penyediaToTahapan: Record<string, string> = {
+  "BPS Kabupaten Majalengka": "BPS Kabupaten Majalengka",
+  "Konsultan Perancangan": "Perencanaan",
+  "Perencanaan": "Perencanaan",
+  "Kontraktor Pelaksana": "Pelaksanaan",
+  "Pelaksanaan": "Pelaksanaan",
+  "Konsultan Pengawas": "Pengawasan",
+  "Pengawasan": "Pengawasan",
+};
+
+export function normalizePenyedia(penyedia?: string): string {
+  if (!penyedia) return "";
+  const key = penyedia.trim();
+  if (penyediaToTahapan[key]) return penyediaToTahapan[key];
+  const normalizedKey = key.charAt(0).toUpperCase() + key.slice(1).toLowerCase();
+  return penyediaToTahapan[normalizedKey] || key;
+}
+
 // Extract file ID from Google Drive sharing URL
 // Supports: /d/{id}/, ?id={id}, /open?id={id}, /file/d/{id}/, etc.
 export function extractGoogleDriveFileId(url: string): string | null {

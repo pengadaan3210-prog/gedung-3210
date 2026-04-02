@@ -1,4 +1,5 @@
 import { Kegiatan, Tahapan } from "@/lib/types";
+import { normalizePenyedia } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, PieChart, Pie, Legend } from "recharts";
 
@@ -8,16 +9,16 @@ interface ProgressChartsProps {
 
 const TAHAPAN_COLORS: Record<string, string> = {
   "BPS Kabupaten Majalengka": "hsl(215, 70%, 28%)",
-  "Konsultan Perancangan": "hsl(200, 75%, 45%)",
-  "Kontraktor Pelaksana": "hsl(38, 92%, 50%)",
-  "Konsultan Pengawas": "hsl(152, 60%, 40%)",
+  "Perencanaan": "hsl(200, 75%, 45%)",
+  "Pelaksanaan": "hsl(38, 92%, 50%)",
+  "Pengawasan": "hsl(152, 60%, 40%)",
 };
 
 const TAHAPAN_MAP: { label: string; value: string }[] = [
   { label: "BPS Kabupaten Majalengka", value: "BPS Kabupaten Majalengka" },
-  { label: "Konsultan Perancangan", value: "Konsultan Perancangan" },
-  { label: "Kontraktor Pelaksana", value: "Kontraktor Pelaksana" },
-  { label: "Konsultan Pengawas", value: "Konsultan Pengawas" },
+  { label: "Konsultan Perancangan", value: "Perencanaan" },
+  { label: "Kontraktor Pelaksana", value: "Pelaksanaan" },
+  { label: "Konsultan Pengawas", value: "Pengawasan" },
 ];
 
 const STATUS_COLORS: Record<string, string> = {
@@ -29,7 +30,7 @@ const STATUS_COLORS: Record<string, string> = {
 
 const ProgressCharts = ({ data }: ProgressChartsProps) => {
   const penyediaData = TAHAPAN_MAP.map((p) => {
-    const items = data.filter((d) => (d.penyedia || '') === p.value);
+    const items = data.filter((d) => normalizePenyedia(d.penyedia) === p.value);
     const avg = items.length ? Math.round(items.reduce((s, d) => s + d.persentaseProgres, 0) / items.length) : 0;
     return { name: p.label, progres: avg, total: items.length };
   });

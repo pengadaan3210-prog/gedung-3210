@@ -1,5 +1,6 @@
 import { useKegiatan } from "@/hooks/useSheetsData";
 import { Kegiatan } from "@/lib/types";
+import { normalizePenyedia } from "@/lib/utils";
 import StatsCards from "@/components/StatsCards";
 import ProgressCharts from "@/components/ProgressCharts";
 import LoadingState from "@/components/LoadingState";
@@ -26,13 +27,13 @@ const Dashboard = () => {
 
   const TAHAPAN_MAP = [
     { label: "BPS Kabupaten Majalengka", value: "BPS Kabupaten Majalengka" },
-    { label: "Konsultan Perancangan", value: "Konsultan Perancangan" },
-    { label: "Kontraktor Pelaksana", value: "Kontraktor Pelaksana" },
-    { label: "Konsultan Pengawas", value: "Konsultan Pengawas" },
+    { label: "Konsultan Perancangan", value: "Perencanaan" },
+    { label: "Kontraktor Pelaksana", value: "Pelaksanaan" },
+    { label: "Konsultan Pengawas", value: "Pengawasan" },
   ];
 
   const tahapanSummary = TAHAPAN_MAP.map((p) => {
-    const items = data.filter((d) => (d.penyedia || '') === p.value);
+    const items = data.filter((d) => normalizePenyedia(d.penyedia) === p.value);
     const avg = items.length
       ? Math.round(items.reduce((s, d) => s + d.persentaseProgres, 0) / items.length)
       : 0;
@@ -153,7 +154,7 @@ const Dashboard = () => {
                 <div key={item.id} className="p-3 rounded-lg bg-destructive/5 border border-destructive/10">
                   <p className="text-sm font-medium text-foreground leading-tight">{item.uraianKegiatan}</p>
                   <div className="flex items-center gap-2 mt-1.5">
-                    <Badge variant="outline" className="text-[10px]">{item.tahapan}</Badge>
+                    <Badge variant="outline" className="text-[10px]">{normalizePenyedia(item.penyedia) || item.tahapan}</Badge>
                     <span className="text-[11px] text-destructive font-medium">
                       Deadline: {new Date(item.tanggalSelesai).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}
                     </span>
