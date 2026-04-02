@@ -31,7 +31,6 @@ const MitigasiPage = () => {
   const { data, isLoading, isError, refetch } = useMitigasi();
   const [search, setSearch] = useState("");
   const [sumberFilter, setSumberFilter] = useState("Semua");
-  const [statusFilter, setStatusFilter] = useState("Semua");
   const [selected, setSelected] = useState<Mitigasi | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const ROWS_PER_PAGE = 10;
@@ -44,12 +43,10 @@ const MitigasiPage = () => {
       item.uraianRisiko.toLowerCase().includes(search.toLowerCase()) ||
       item.kategoriRisiko.toLowerCase().includes(search.toLowerCase());
     const matchSumber = sumberFilter === "Semua" || item.sumberRisiko === sumberFilter;
-    const matchStatus = statusFilter === "Semua" || item.status === statusFilter;
-    return matchSearch && matchSumber && matchStatus;
+    return matchSearch && matchSumber;
   });
 
   const sumbers = ["Semua", ...new Set(data.map((d) => d.sumberRisiko).filter(Boolean))];
-  const statuses = ["Semua", ...new Set(data.map((d) => d.status).filter(Boolean))];
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / ROWS_PER_PAGE));
   const startIndex = (currentPage - 1) * ROWS_PER_PAGE;
@@ -84,12 +81,6 @@ const MitigasiPage = () => {
             {sumbers.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
           </SelectContent>
         </Select>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-[160px]"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            {statuses.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-          </SelectContent>
-        </Select>
       </div>
 
       <Card className="shadow-md">
@@ -103,10 +94,10 @@ const MitigasiPage = () => {
                   <TableHead>Uraian Risiko</TableHead>
                   <TableHead>Mitigasi / Solusi</TableHead>
                   <TableHead>Tindak Lanjut</TableHead>
-                  <TableHead>Tingkat</TableHead>
                   <TableHead>PIC</TableHead>
                   <TableHead>Target Waktu</TableHead>
-                  <TableHead>Status</TableHead>
+                  <TableHead>Tingkat</TableHead>
+                  <TableHead>Link</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -128,17 +119,19 @@ const MitigasiPage = () => {
                       <TableCell className="text-sm max-w-[220px] truncate" title={item.uraianRisiko}>{item.uraianRisiko}</TableCell>
                       <TableCell className="text-sm max-w-[220px] truncate" title={item.mitigasiSolusi}>{item.mitigasiSolusi || '-'}</TableCell>
                       <TableCell className="text-sm max-w-[220px] truncate" title={item.tindakLanjut}>{item.tindakLanjut || '-'}</TableCell>
+                      <TableCell className="text-sm">{item.pic || '-'}</TableCell>
+                      <TableCell className="text-sm">{item.targetWaktu || '-'}</TableCell>
                       <TableCell>
                         <Badge className={`text-xs ${RISIKO_COLORS[item.tingkatRisiko] || ''}`}>
                           {item.tingkatRisiko || '-'}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-sm">{item.pic || '-'}</TableCell>
-                      <TableCell className="text-sm">{item.targetWaktu || '-'}</TableCell>
                       <TableCell>
-                        <Badge className={`text-xs ${STATUS_COLORS[item.status] || ''}`}>
-                          {item.status || '-'}
-                        </Badge>
+                        {item.buktiDukung ? (
+                          <a href={item.buktiDukung} target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">
+                            <ExternalLink className="h-4 w-4" />
+                          </a>
+                        ) : '-'}
                       </TableCell>
                     </TableRow>
                   ))
