@@ -115,7 +115,7 @@ export function AppSidebar() {
 
         <SidebarGroup>
           <SidebarGroupLabel className="text-sidebar-foreground/50 text-[10px] uppercase tracking-wider font-semibold">
-            Potensi Masalah
+            Mitigasi Resiko
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>{renderMenu(mitigasiMenu)}</SidebarMenu>
