@@ -33,6 +33,8 @@ const StakeholderPage = () => {
   const [kategoriFilter, setKategoriFilter] = useState("Semua");
   const [statusFilter, setStatusFilter] = useState("Semua");
   const [selected, setSelected] = useState<Stakeholder | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const ROWS_PER_PAGE = 10;
 
   if (isLoading) return <div className="p-6"><LoadingState /></div>;
   if (isError) return <div className="p-6"><ErrorState onRetry={() => refetch()} /></div>;
@@ -48,6 +50,15 @@ const StakeholderPage = () => {
 
   const kategoris = ["Semua", ...new Set(data.map((d) => d.kategori).filter(Boolean))];
   const statuses = ["Semua", ...new Set(data.map((d) => d.status).filter(Boolean))];
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / ROWS_PER_PAGE));
+  const startIndex = (currentPage - 1) * ROWS_PER_PAGE;
+  const paginatedData = filtered.slice(startIndex, startIndex + ROWS_PER_PAGE);
+
+  const goPage = (page: number) => {
+    const nextPage = Math.max(1, Math.min(page, totalPages));
+    setCurrentPage(nextPage);
+  };
 
   return (
     <div className="p-6 space-y-6">
@@ -111,13 +122,13 @@ const StakeholderPage = () => {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filtered.map((item, idx) => (
+                  paginatedData.map((item, idx) => (
                     <TableRow
                       key={item.id}
                       className="cursor-pointer hover:bg-muted/50 transition-colors"
                       onClick={() => setSelected(item)}
                     >
-                      <TableCell className="text-sm">{idx + 1}</TableCell>
+                      <TableCell className="text-sm">{startIndex + idx + 1}</TableCell>
                       <TableCell className="text-sm font-medium">{item.namaStakeholder}</TableCell>
                       <TableCell><Badge variant="outline" className="text-xs">{item.kategori}</Badge></TableCell>
                       <TableCell className="text-sm max-w-[150px] truncate" title={item.peranStakeholder}>{item.peranStakeholder}</TableCell>
@@ -153,6 +164,32 @@ const StakeholderPage = () => {
           </div>
         </CardContent>
       </Card>
+
+      <div className="flex items-center justify-between py-3 px-2">
+        <span className="text-sm text-muted-foreground">Halaman {currentPage} dari {totalPages}</span>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => goPage(1)}
+            disabled={currentPage === 1}
+            className="rounded px-3 py-1 border border-border bg-background text-sm disabled:opacity-50"
+          >Awal</button>
+          <button
+            onClick={() => goPage(currentPage - 1)}
+            disabled={currentPage === 1}
+            className="rounded px-3 py-1 border border-border bg-background text-sm disabled:opacity-50"
+          >Sebelumnya</button>
+          <button
+            onClick={() => goPage(currentPage + 1)}
+            disabled={currentPage === totalPages}
+            className="rounded px-3 py-1 border border-border bg-background text-sm disabled:opacity-50"
+          >Berikut</button>
+          <button
+            onClick={() => goPage(totalPages)}
+            disabled={currentPage === totalPages}
+            className="rounded px-3 py-1 border border-border bg-background text-sm disabled:opacity-50"
+          >Akhir</button>
+        </div>
+      </div>
 
       <StakeholderDetailModal item={selected} open={!!selected} onClose={() => setSelected(null)} />
     </div>
