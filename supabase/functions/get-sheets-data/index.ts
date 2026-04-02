@@ -1,4 +1,7 @@
+// @ts-nocheck
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+
+declare const Deno: any;
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -276,15 +279,34 @@ function mapMitigasi(raw: Record<string, string>[]) {
 }
 
 function mapFotoProgres(raw: Record<string, string>[]) {
-  return raw.map((r) => ({
-    id: r.id || '',
-    tanggal: parseDate(r.tanggal),
-    judul: r.judul || '',
-    deskripsi: r.deskripsi || '',
-    kategori: r.kategori || '',
-    linkFoto: r.link_foto || '',
-    mingguKe: parseInt(r.minggu_ke) || 0,
-  }));
+  const monthNames = [
+    'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+    'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember',
+  ];
+
+  return raw.map((r) => {
+    const parsedTanggal = parseDate(r.tanggal);
+    const date = parsedTanggal ? new Date(parsedTanggal) : null;
+
+    const derivedMingguKe = date ? Math.ceil(date.getDate() / 7) : 0;
+    const derivedBulan = date
+      ? `${monthNames[date.getMonth()]} ${date.getFullYear()}`
+      : '';
+
+    const mingguKe = parseInt(r.minggu_ke) || derivedMingguKe || 0;
+    const bulan = (r.bulan || r.month || '').trim() || derivedBulan;
+
+    return {
+      id: r.id || '',
+      tanggal: parsedTanggal,
+      judul: r.judul || '',
+      deskripsi: r.deskripsi || '',
+      kategori: r.kategori || '',
+      linkFoto: r.link_foto || '',
+      mingguKe,
+      bulan,
+    };
+  });
 }
 
 serve(async (req) => {
