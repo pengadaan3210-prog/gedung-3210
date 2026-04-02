@@ -43,7 +43,7 @@ const providerMenu = [
 
 const mitigasiMenu = [
   { title: "Stakeholder", url: "/stakeholder", icon: Users },
-  { title: "Mitigasi", url: "/mitigasi", icon: ShieldAlert },
+  { title: "Potensi Masalah", url: "/mitigasi", icon: ShieldAlert },
 ];
 
 const supportMenu = [
