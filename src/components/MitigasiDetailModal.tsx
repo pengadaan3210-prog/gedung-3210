@@ -11,9 +11,9 @@ interface Props {
 }
 
 const Field = ({ label, value }: { label: string; value: string }) => (
-  <div>
-    <div className="text-xs text-muted-foreground font-medium mb-1">{label}</div>
-    <div className="text-sm text-foreground">{value || "-"}</div>
+  <div className="text-xs">
+    <div className="text-[11px] text-muted-foreground font-medium mb-1">{label}</div>
+    <div className="text-sm text-foreground bg-muted/10 px-2 py-1 rounded">{value || "-"}</div>
   </div>
 );
 

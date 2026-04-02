@@ -11,12 +11,12 @@ interface Props {
 }
 
 const Field = ({ label, value, icon: Icon }: { label: string; value: string; icon?: React.ReactNode }) => (
-  <div>
-    <div className="flex items-center gap-2 text-xs text-muted-foreground font-semibold mb-2">
+  <div className="text-xs">
+    <div className="flex items-center gap-1 text-[11px] text-muted-foreground font-semibold mb-1">
       {Icon}
       {label}
     </div>
-    <div className="text-sm text-foreground bg-muted/30 p-2.5 rounded border border-border">{value || "-"}</div>
+    <div className="text-sm text-foreground bg-muted/05 px-2 py-1 rounded">{value || "-"}</div>
   </div>
 );
 
@@ -37,10 +37,10 @@ const StakeholderDetailModal = ({ item, open, onClose }: Props) => {
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto p-4">
         <DialogHeader>
-          <DialogTitle className="text-xl font-bold text-foreground pr-8 flex items-center gap-2">
-            <Users className="h-5 w-5 text-accent" />
+          <DialogTitle className="text-lg font-semibold text-foreground pr-6 flex items-center gap-2">
+            <Users className="h-4 w-4 text-accent" />
             {item.namaStakeholder}
           </DialogTitle>
         </DialogHeader>
@@ -84,7 +84,7 @@ const StakeholderDetailModal = ({ item, open, onClose }: Props) => {
           <h3 className="text-sm font-semibold text-foreground">Strategi & Rencana Aksi</h3>
         </div>
 
-        <div className="space-y-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <Field
             label="Strategi Pendekatan"
             value={item.strategiPendekatan}
@@ -101,16 +101,13 @@ const StakeholderDetailModal = ({ item, open, onClose }: Props) => {
           <h3 className="text-sm font-semibold text-foreground">Status & Catatan</h3>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <Field
             label="Kendala"
             value={item.kendala || "-"}
             icon={<AlertCircle className="h-4 w-4 text-destructive" />}
           />
           <Field label="Status" value={item.status} icon={<CheckCircle2 className="h-4 w-4 text-success" />} />
-        </div>
-
-        <div className="mt-4">
           <Field label="Keterangan" value={item.keterangan} />
         </div>
 
