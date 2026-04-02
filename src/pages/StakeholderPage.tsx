@@ -12,6 +12,8 @@ import { Input } from "@/components/ui/input";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
+import StakeholderDetailModal from "@/components/StakeholderDetailModal";
+import { Stakeholder } from "@/lib/types";
 
 const STATUS_COLORS: Record<string, string> = {
   Aktif: "bg-green-100 text-green-800",
@@ -30,6 +32,7 @@ const StakeholderPage = () => {
   const [search, setSearch] = useState("");
   const [kategoriFilter, setKategoriFilter] = useState("Semua");
   const [statusFilter, setStatusFilter] = useState("Semua");
+  const [selected, setSelected] = useState<Stakeholder | null>(null);
 
   if (isLoading) return <div className="p-6"><LoadingState /></div>;
   if (isError) return <div className="p-6"><ErrorState onRetry={() => refetch()} /></div>;
@@ -109,7 +112,11 @@ const StakeholderPage = () => {
                   </TableRow>
                 ) : (
                   filtered.map((item, idx) => (
-                    <TableRow key={item.id}>
+                    <TableRow
+                      key={item.id}
+                      className="cursor-pointer hover:bg-muted/50 transition-colors"
+                      onClick={() => setSelected(item)}
+                    >
                       <TableCell className="text-sm">{idx + 1}</TableCell>
                       <TableCell className="text-sm font-medium">{item.namaStakeholder}</TableCell>
                       <TableCell><Badge variant="outline" className="text-xs">{item.kategori}</Badge></TableCell>
@@ -146,6 +153,8 @@ const StakeholderPage = () => {
           </div>
         </CardContent>
       </Card>
+
+      <StakeholderDetailModal item={selected} open={!!selected} onClose={() => setSelected(null)} />
     </div>
   );
 };
