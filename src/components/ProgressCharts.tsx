@@ -16,9 +16,9 @@ const TAHAPAN_COLORS: Record<string, string> = {
 
 const TAHAPAN_MAP: { label: string; value: string }[] = [
   { label: "BPS Kabupaten Majalengka", value: "BPS Kabupaten Majalengka" },
-  { label: "Konsultan Perancangan", value: "Perencanaan" },
-  { label: "Kontraktor Pelaksana", value: "Pelaksanaan" },
-  { label: "Konsultan Pengawas", value: "Pengawasan" },
+  { label: "Perencanaan", value: "Perencanaan" },
+  { label: "Pelaksanaan", value: "Pelaksanaan" },
+  { label: "Pengawasan", value: "Pengawasan" },
 ];
 
 const STATUS_COLORS: Record<string, string> = {
@@ -56,9 +56,17 @@ const ProgressCharts = ({ data }: ProgressChartsProps) => {
               <YAxis dataKey="name" type="category" tick={{ fontSize: 11 }} width={160} />
               <Tooltip formatter={(v: number) => `${v}%`} />
               <Bar dataKey="progres" radius={[0, 6, 6, 0]} barSize={24}>
-                {penyediaData.map((entry) => (
-                  <Cell key={entry.name} fill={TAHAPAN_COLORS[entry.name] || "#999"} />
-                ))}
+                {penyediaData.map((entry) => {
+                  const colorKey = TAHAPAN_COLORS[entry.name]
+                    ? entry.name
+                    : TAHAPAN_COLORS[entry.name?.toLowerCase()] ? entry.name : entry.name;
+                  return (
+                    <Cell
+                      key={entry.name}
+                      fill={TAHAPAN_COLORS[entry.name] || TAHAPAN_COLORS[entry.name === 'Konsultan Perancangan' ? 'Perencanaan' : entry.name === 'Kontraktor Pelaksana' ? 'Pelaksanaan' : entry.name === 'Konsultan Pengawas' ? 'Pengawasan' : entry.name] || "#1d4ed8"}
+                    />
+                  );
+                })}
               </Bar>
             </BarChart>
           </ResponsiveContainer>
