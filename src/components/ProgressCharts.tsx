@@ -6,18 +6,18 @@ interface ProgressChartsProps {
   data: Kegiatan[];
 }
 
-const PENYEDIA_COLORS: Record<string, string> = {
+const TAHAPAN_COLORS: Record<string, string> = {
   "BPS Kabupaten Majalengka": "hsl(215, 70%, 28%)",
   "Konsultan Perancangan": "hsl(200, 75%, 45%)",
   "Kontraktor Pelaksana": "hsl(38, 92%, 50%)",
   "Konsultan Pengawas": "hsl(152, 60%, 40%)",
 };
 
-const PENYEDIA_MAP: { label: string; value: string }[] = [
+const TAHAPAN_MAP: { label: string; value: string }[] = [
   { label: "BPS Kabupaten Majalengka", value: "BPS Kabupaten Majalengka" },
-  { label: "Konsultan Perancangan", value: "Perencanaan" },
-  { label: "Kontraktor Pelaksana", value: "Pelaksanaan" },
-  { label: "Konsultan Pengawas", value: "Pengawasan" },
+  { label: "Konsultan Perancangan", value: "Konsultan Perancangan" },
+  { label: "Kontraktor Pelaksana", value: "Kontraktor Pelaksana" },
+  { label: "Konsultan Pengawas", value: "Konsultan Pengawas" },
 ];
 
 const STATUS_COLORS: Record<string, string> = {
@@ -42,10 +42,10 @@ const ProgressCharts = ({ data }: ProgressChartsProps) => {
   ).map(([name, value]) => ({ name, value }));
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div className="grid grid-cols-1 gap-6">
       <Card className="shadow-md border-border">
         <CardHeader className="pb-2">
-          <CardTitle className="text-base font-semibold text-foreground">Progres per Penyedia</CardTitle>
+          <CardTitle className="text-base font-semibold text-foreground">Progres per Tahapan</CardTitle>
         </CardHeader>
         <CardContent>
           <ResponsiveContainer width="100%" height={260}>
@@ -56,38 +56,10 @@ const ProgressCharts = ({ data }: ProgressChartsProps) => {
               <Tooltip formatter={(v: number) => `${v}%`} />
               <Bar dataKey="progres" radius={[0, 6, 6, 0]} barSize={24}>
                 {penyediaData.map((entry) => (
-                  <Cell key={entry.name} fill={PENYEDIA_COLORS[entry.name] || "#999"} />
+                  <Cell key={entry.name} fill={TAHAPAN_COLORS[entry.name] || "#999"} />
                 ))}
               </Bar>
             </BarChart>
-          </ResponsiveContainer>
-        </CardContent>
-      </Card>
-
-      <Card className="shadow-md border-border">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base font-semibold text-foreground">Distribusi Status</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ResponsiveContainer width="100%" height={220}>
-            <PieChart>
-              <Pie
-                data={statusData}
-                cx="50%"
-                cy="50%"
-                innerRadius={50}
-                outerRadius={80}
-                paddingAngle={4}
-                dataKey="value"
-                label={({ name, value }) => `${name} (${value})`}
-                labelLine={false}
-              >
-                {statusData.map((entry) => (
-                  <Cell key={entry.name} fill={STATUS_COLORS[entry.name] || "#999"} />
-                ))}
-              </Pie>
-              <Tooltip />
-            </PieChart>
           </ResponsiveContainer>
         </CardContent>
       </Card>
