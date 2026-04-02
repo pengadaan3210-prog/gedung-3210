@@ -97,7 +97,7 @@ const MitigasiPage = () => {
                   <TableHead>PIC</TableHead>
                   <TableHead>Target Waktu</TableHead>
                   <TableHead>Tingkat</TableHead>
-                  <TableHead>Link</TableHead>
+                  <TableHead>Bukti</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
