@@ -4,8 +4,6 @@ import LoadingState from "@/components/LoadingState";
 import ErrorState from "@/components/ErrorState";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { FileSpreadsheet, FileText } from "lucide-react";
 
 const Laporan = () => {
   const { data, isLoading, isError, refetch } = useKegiatan();
@@ -46,15 +44,7 @@ const Laporan = () => {
       <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Laporan</h1>
-          <p className="text-sm text-muted-foreground mt-1">Rekap progres dan ekspor data kegiatan</p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" className="gap-2">
-            <FileSpreadsheet className="h-4 w-4" /> Export Excel
-          </Button>
-          <Button variant="outline" size="sm" className="gap-2">
-            <FileText className="h-4 w-4" /> Export PDF
-          </Button>
+          <p className="text-sm text-muted-foreground mt-1">Rekap progres kegiatan</p>
         </div>
       </div>
 
