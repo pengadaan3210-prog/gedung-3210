@@ -28,7 +28,7 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 const ProgressCharts = ({ data }: ProgressChartsProps) => {
-  const penyediaData = PENYEDIA_MAP.map((p) => {
+  const penyediaData = TAHAPAN_MAP.map((p) => {
     const items = data.filter((d) => (d.penyedia || '') === p.value);
     const avg = items.length ? Math.round(items.reduce((s, d) => s + d.persentaseProgres, 0) / items.length) : 0;
     return { name: p.label, progres: avg, total: items.length };
