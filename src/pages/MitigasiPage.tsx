@@ -64,10 +64,10 @@ const MitigasiPage = () => {
     <div className="p-6 space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-          <ShieldAlert className="h-6 w-6" /> Mitigasi Risiko
+          <ShieldAlert className="h-6 w-6" /> Potensi Masalah
         </h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Identifikasi risiko dan rencana mitigasi
+          Identifikasi potensi masalah dan rencana penanganan
         </p>
       </div>
 
@@ -101,7 +101,8 @@ const MitigasiPage = () => {
                   <TableHead className="w-10">No</TableHead>
                   <TableHead>Sumber</TableHead>
                   <TableHead>Uraian Risiko</TableHead>
-                  <TableHead>Kategori</TableHead>
+                  <TableHead>Mitigasi / Solusi</TableHead>
+                  <TableHead>Tindak Lanjut</TableHead>
                   <TableHead>Tingkat</TableHead>
                   <TableHead>PIC</TableHead>
                   <TableHead>Target Waktu</TableHead>
@@ -111,7 +112,7 @@ const MitigasiPage = () => {
               <TableBody>
                 {filtered.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
+                    <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
                       Tidak ada data mitigasi
                     </TableCell>
                   </TableRow>
@@ -124,8 +125,9 @@ const MitigasiPage = () => {
                     >
                       <TableCell className="text-sm">{startIndex + idx + 1}</TableCell>
                       <TableCell><Badge variant="outline" className="text-xs">{item.sumberRisiko}</Badge></TableCell>
-                      <TableCell className="text-sm max-w-[200px] truncate" title={item.uraianRisiko}>{item.uraianRisiko}</TableCell>
-                      <TableCell className="text-sm">{item.kategoriRisiko || '-'}</TableCell>
+                      <TableCell className="text-sm max-w-[220px] truncate" title={item.uraianRisiko}>{item.uraianRisiko}</TableCell>
+                      <TableCell className="text-sm max-w-[220px] truncate" title={item.mitigasiSolusi}>{item.mitigasiSolusi || '-'}</TableCell>
+                      <TableCell className="text-sm max-w-[220px] truncate" title={item.tindakLanjut}>{item.tindakLanjut || '-'}</TableCell>
                       <TableCell>
                         <Badge className={`text-xs ${RISIKO_COLORS[item.tingkatRisiko] || ''}`}>
                           {item.tingkatRisiko || '-'}

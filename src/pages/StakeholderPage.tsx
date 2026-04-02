@@ -100,7 +100,6 @@ const StakeholderPage = () => {
                 <TableRow>
                   <TableHead className="w-10">No</TableHead>
                   <TableHead>Nama Stakeholder</TableHead>
-                  <TableHead>Kategori</TableHead>
                   <TableHead>Peran</TableHead>
                   <TableHead>Kepentingan</TableHead>
                   <TableHead>Pengaruh</TableHead>
@@ -109,15 +108,13 @@ const StakeholderPage = () => {
                   <TableHead>Tindak Lanjut</TableHead>
                   <TableHead>Output</TableHead>
                   <TableHead>PIC</TableHead>
-                  <TableHead>Status</TableHead>
                   <TableHead>Bukti</TableHead>
-                  <TableHead>Keterangan</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filtered.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={14} className="text-center text-muted-foreground py-8">
+                    <TableCell colSpan={10} className="text-center text-muted-foreground py-8">
                       Tidak ada data stakeholder
                     </TableCell>
                   </TableRow>
@@ -130,7 +127,6 @@ const StakeholderPage = () => {
                     >
                       <TableCell className="text-sm">{startIndex + idx + 1}</TableCell>
                       <TableCell className="text-sm font-medium">{item.namaStakeholder}</TableCell>
-                      <TableCell><Badge variant="outline" className="text-xs">{item.kategori}</Badge></TableCell>
                       <TableCell className="text-sm max-w-[150px] truncate" title={item.peranStakeholder}>{item.peranStakeholder}</TableCell>
                       <TableCell className="text-sm max-w-[150px] truncate" title={item.kepentingan}>{item.kepentingan}</TableCell>
                       <TableCell>
@@ -144,18 +140,12 @@ const StakeholderPage = () => {
                       <TableCell className="text-sm max-w-[120px] truncate" title={item.outputYangDiharapkan}>{item.outputYangDiharapkan || '-'}</TableCell>
                       <TableCell className="text-sm">{item.pic || '-'}</TableCell>
                       <TableCell>
-                        <Badge className={`text-xs ${STATUS_COLORS[item.status] || ''}`}>
-                          {item.status || '-'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
                         {item.buktiDukung ? (
                           <a href={item.buktiDukung} target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">
                             <ExternalLink className="h-4 w-4" />
                           </a>
                         ) : '-'}
                       </TableCell>
-                      <TableCell className="text-sm max-w-[120px] truncate" title={item.keterangan}>{item.keterangan || '-'}</TableCell>
                     </TableRow>
                   ))
                 )}
