@@ -105,6 +105,7 @@ const Laporan = () => {
                 <TableRow className="bg-primary/5">
                   <TableHead className="font-semibold">PIC</TableHead>
                   <TableHead className="font-semibold">Output</TableHead>
+                  <TableHead className="font-semibold text-center">Jumlah Output Unik</TableHead>
                   <TableHead className="font-semibold text-center">Kegiatan</TableHead>
                   <TableHead className="font-semibold text-center">Rata-rata (%)</TableHead>
                 </TableRow>
@@ -112,20 +113,26 @@ const Laporan = () => {
               <TableBody>
                 {Object.entries(
                   data.reduce((acc, d) => {
-                    if (!acc[d.pic]) acc[d.pic] = { output: d.output, items: [] };
+                    if (!acc[d.pic]) acc[d.pic] = { items: [] };
                     acc[d.pic].items.push(d);
                     return acc;
-                  }, {} as Record<string, { output: string; items: typeof data }>)
-                ).map(([pic, info]) => (
-                  <TableRow key={pic}>
-                    <TableCell className="font-medium">{pic}</TableCell>
-                    <TableCell className="text-sm text-muted-foreground">{info.output}</TableCell>
-                    <TableCell className="text-center">{info.items.length}</TableCell>
-                    <TableCell className="text-center font-bold text-accent">
-                      {Math.round(info.items.reduce((s, d) => s + d.persentaseProgres, 0) / info.items.length)}%
-                    </TableCell>
-                  </TableRow>
-                ))}
+                  }, {} as Record<string, { items: typeof data }>)
+                ).map(([pic, info]) => {
+                  const outputs = [...new Set(info.items.map(d => d.output))];
+                  const outputDisplay = outputs.join(' | ');
+                  const jumlahOutputUnik = outputs.length;
+                  const kegiatan = info.items.length;
+                  const avg = Math.round(info.items.reduce((s, d) => s + d.persentaseProgres, 0) / kegiatan);
+                  return (
+                    <TableRow key={pic}>
+                      <TableCell className="font-medium">{pic}</TableCell>
+                      <TableCell className="text-sm text-muted-foreground">{outputDisplay}</TableCell>
+                      <TableCell className="text-center">{jumlahOutputUnik}</TableCell>
+                      <TableCell className="text-center">{kegiatan}</TableCell>
+                      <TableCell className="text-center font-bold text-accent">{avg}%</TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           </div>
