@@ -408,7 +408,7 @@ export default function KurvaS() {
           <CardTitle>Ringkasan Statistik</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid gap-4 md:grid-cols-4">
             <div className="space-y-2">
               <p className="text-sm font-medium text-muted-foreground">Total Minggu</p>
               <p className="text-2xl font-bold">{planning.length}</p>
@@ -427,6 +427,16 @@ export default function KurvaS() {
               <p className="text-2xl font-bold">
                 {Math.max(
                   ...detailData.map((d) => Math.abs(d.deviation))
+                ).toFixed(2)}
+                %
+              </p>
+            </div>
+            <div className="space-y-2">
+              <p className="text-sm font-medium text-muted-foreground">Min Deviasi</p>
+              <p className="text-2xl font-bold text-purple-600">
+                {(detailData.length > 0
+                  ? Math.min(...detailData.map((d) => Math.abs(d.deviation)))
+                  : 0
                 ).toFixed(2)}
                 %
               </p>
