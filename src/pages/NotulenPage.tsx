@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { ExternalLink, Calendar, MapPin, Users, FileText, Image, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useState } from "react";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { isGoogleDriveUrl, getGoogleDriveImageUrl, getGoogleDriveViewUrl } from "@/lib/utils";
@@ -81,9 +82,9 @@ const NotulenPage = () => {
             const viewUrl = isGDrive ? getGoogleDriveViewUrl(item.linkDokumentasiFoto) : item.linkDokumentasiFoto;
 
             return (
-              <Card key={item.id} className="shadow-sm border-border">
-                <CardContent className="p-3">
-                  <div className="flex flex-col gap-2">
+              <Card key={item.id} className="shadow-sm border-border overflow-hidden hover:shadow-md transition-shadow">
+                <CardContent className="p-4">
+                  <div className="flex flex-col gap-3">
                     {thumbnailUrl && (
                       <div 
                         className="w-full h-16 bg-muted rounded border overflow-hidden cursor-pointer hover:opacity-80 transition-opacity relative"
@@ -141,7 +142,14 @@ const NotulenPage = () => {
                     </div>
 
                     {item.ringkasan && (
-                      <p className="text-sm text-foreground/80 leading-snug line-clamp-2">{item.ringkasan}</p>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <p className="text-sm text-foreground/80 leading-snug line-clamp-2 cursor-help">{item.ringkasan}</p>
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-xs text-sm">
+                          {item.ringkasan}
+                        </TooltipContent>
+                      </Tooltip>
                     )}
 
                     <div className="flex gap-3">
