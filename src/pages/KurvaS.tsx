@@ -61,10 +61,10 @@ export default function KurvaS() {
       const deviation = (r?.realisasiPersentaseKumulatif || 0) - p.targetPersentaseKumulatif;
       const status =
         deviation > 2
-          ? "Ahead"
+          ? "Diatas Target"
           : deviation < -2
-            ? "Behind"
-            : "On Track";
+            ? "Dibawah Target"
+            : "On track";
 
       return {
         minggu: p.mingguke,
@@ -149,9 +149,9 @@ export default function KurvaS() {
   const latestPlanning = planning[planning.length - 1];
   const latestRealisasi = realisasi[realisasi.length - 1];
   const finalDeviation = (latestRealisasi?.realisasiPersentaseKumulatif || 0) - (latestPlanning?.targetPersentaseKumulatif || 0);
-  const onTrack = detailData.filter((d) => d.status === "On Track").length;
-  const ahead = detailData.filter((d) => d.status === "Ahead").length;
-  const behind = detailData.filter((d) => d.status === "Behind").length;
+  const sesuaiTarget = detailData.filter((d) => d.status === "On track").length;
+  const diAtasTarget = detailData.filter((d) => d.status === "Diatas Target").length;
+  const diBawahTarget = detailData.filter((d) => d.status === "Dibawah Target").length;
 
   return (
     <div className="space-y-6 p-4">
@@ -204,16 +204,16 @@ export default function KurvaS() {
           </CardHeader>
           <CardContent>
             <div className="flex gap-2 mt-2">
-              <Badge variant="outline" className="bg-green-50">
-                {onTrack} On Track
+              <Badge variant="outline" className="bg-blue-50">
+                {sesuaiTarget} On track
               </Badge>
             </div>
             <div className="flex gap-2 mt-2">
-              <Badge variant="outline" className="bg-blue-50">
-                {ahead} Ahead
+              <Badge variant="outline" className="bg-green-50">
+                {diAtasTarget} Diatas Target
               </Badge>
               <Badge variant="outline" className="bg-red-50">
-                {behind} Behind
+                {diBawahTarget} Dibawah Target
               </Badge>
             </div>
           </CardContent>
@@ -349,16 +349,16 @@ export default function KurvaS() {
                     <TableCell>
                       <Badge
                         variant={
-                          row.status === "On Track"
+                          row.status === "On track"
                             ? "outline"
-                            : row.status === "Ahead"
+                            : row.status === "Diatas Target"
                               ? "secondary"
                               : "destructive"
                         }
                         className={
-                          row.status === "On Track"
+                          row.status === "On track"
                             ? "bg-blue-50 text-blue-700 border-blue-200"
-                            : row.status === "Ahead"
+                            : row.status === "Diatas Target"
                               ? "bg-green-50 text-green-700 border-green-200"
                               : "bg-red-50 text-red-700 border-red-200"
                         }
