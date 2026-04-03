@@ -107,7 +107,7 @@ export default function KurvaS() {
         <div className="mt-1">
           {payload.map((entry: any) => {
             const valueClass = entry.dataKey === "planning"
-              ? "text-green-600"
+              ? "text-blue-600"
               : entry.dataKey === "realisasi"
                 ? "text-orange-600"
                 : "text-gray-700";
