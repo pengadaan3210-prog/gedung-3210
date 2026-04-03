@@ -50,6 +50,8 @@ export default function KurvaS() {
         planning: p.targetPersentaseKumulatif,
         realisasi: r?.realisasiPersentaseKumulatif || 0,
         deviasi: (r?.realisasiPersentaseKumulatif || 0) - p.targetPersentaseKumulatif,
+        tanggalAwal: p.tanggalAwal ? formatDateIndo(p.tanggalAwal) : "-",
+        tanggalAkhir: p.tanggalAkhir ? formatDateIndo(p.tanggalAkhir) : "-",
       };
     });
   }, [planning, realisasi]);
@@ -91,6 +93,35 @@ export default function KurvaS() {
     }
     return detailData;
   }, [detailData, sortBy]);
+
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (!active || !payload || payload.length === 0) return null;
+    const current = chartData.find((item) => item.minggu === label);
+
+    return (
+      <div className="rounded border bg-white p-2 text-sm shadow-lg">
+        <p className="font-semibold">Minggu {label}</p>
+        <p className="text-muted-foreground">
+          {current?.tanggalAwal || "-"} sd {current?.tanggalAkhir || "-"}
+        </p>
+        <div className="mt-1">
+          {payload.map((entry: any) => {
+            const valueClass = entry.dataKey === "planning"
+              ? "text-green-600"
+              : entry.dataKey === "realisasi"
+                ? "text-orange-600"
+                : "text-gray-700";
+            return (
+              <div key={entry.dataKey} className="flex justify-between gap-2">
+                <span className="font-medium">{entry.name}</span>
+                <span className={valueClass}>{Number(entry.value).toFixed(2)}%</span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
 
   const realisasiRows = useMemo(() => {
     return realisasi.map((r) => {
@@ -235,10 +266,7 @@ export default function KurvaS() {
                 label={{ value: "Minggu Ke-", position: "insideBottomRight", offset: -5 }}
               />
               <YAxis label={{ value: "Persentase (%)", angle: -90, position: "insideLeft" }} />
-              <Tooltip
-                formatter={(value: any) => `${value.toFixed(2)}%`}
-                labelFormatter={(label) => `Minggu ${label}`}
-              />
+              <Tooltip content={<CustomTooltip />} />
               <Legend />
               <Line
                 type="monotone"
