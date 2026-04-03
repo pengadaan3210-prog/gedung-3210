@@ -32,13 +32,44 @@ export default function KurvaS() {
   const realisasi = data?.kurvaSRealisasi || [];
 
   // Merge data untuk chart
-  const formatDateIndo = (isoDate: string) => {
-    if (!isoDate) return "";
-    const d = new Date(isoDate);
-    if (Number.isNaN(d.getTime())) return isoDate;
-    const dd = String(d.getDate()).padStart(2, "0");
-    const mm = String(d.getMonth() + 1).padStart(2, "0");
-    const yyyy = d.getFullYear();
+  const formatDateIndo = (dateInput: string) => {
+    if (!dateInput || dateInput === "-") return "-";
+
+    const isoDash = dateInput.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (isoDash) {
+      const [, yyyy, part2, part3] = isoDash;
+      const p2 = Number(part2);
+      const p3 = Number(part3);
+
+      // If format is yyyy-dd-mm (e.g. 2026-31-08) where month > 12, swap
+      if (p2 > 12 && p3 <= 12) {
+        return `${String(p2).padStart(2, "0")}/${String(p3).padStart(2, "0")}/${yyyy}`;
+      }
+
+      // Normal ISO yyyy-mm-dd
+      if (p2 >= 1 && p2 <= 12 && p3 >= 1 && p3 <= 31) {
+        return `${String(p3).padStart(2, "0")}/${String(p2).padStart(2, "0")}/${yyyy}`;
+      }
+    }
+
+    // dd/mm/yyyy or mm/dd/yyyy
+    const slash = dateInput.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+    if (slash) {
+      const dd = Number(slash[1]);
+      const mm = Number(slash[2]);
+      const yyyy = slash[3];
+
+      // if looks like dd/mm/yyyy (day>12) keep (or always output dd/mm/yyyy)
+      return `${String(dd).padStart(2, "0")}/${String(mm).padStart(2, "0")}/${yyyy}`;
+    }
+
+    // Fallback: try Date constructor for other formats
+    const date = new Date(dateInput);
+    if (Number.isNaN(date.getTime())) return dateInput;
+
+    const dd = String(date.getDate()).padStart(2, "0");
+    const mm = String(date.getMonth() + 1).padStart(2, "0");
+    const yyyy = date.getFullYear();
     return `${dd}/${mm}/${yyyy}`;
   };
 
