@@ -67,6 +67,7 @@ export default function KurvaS() {
         deskripsi: p.deskripsiTahapan,
         pekerjaan: r?.deskripsiPekerjaanMinggu || "-",
         kendala: r?.kendala || "-",
+        solusi: r?.solusi || "-",
         pic: r?.pic || "-",
       };
     });
@@ -180,7 +181,7 @@ export default function KurvaS() {
               <Line
                 type="monotone"
                 dataKey="planning"
-                stroke="#3b82f6"
+                stroke="#16a34a"
                 strokeWidth={2}
                 dot={false}
                 name="Target (Planning)"
@@ -188,7 +189,7 @@ export default function KurvaS() {
               <Line
                 type="monotone"
                 dataKey="realisasi"
-                stroke="#10b981"
+                stroke="#dc2626"
                 strokeWidth={2}
                 dot={false}
                 name="Realisasi"
@@ -226,8 +227,9 @@ export default function KurvaS() {
                   <TableHead className="text-center">Kum Plan</TableHead>
                   <TableHead className="text-center">Kum Real</TableHead>
                   <TableHead className="text-center">Deviasi</TableHead>
-                  <TableHead>Status</TableHead>
                   <TableHead>Kendala</TableHead>
+                  <TableHead>Solusi</TableHead>
+                  <TableHead>Status</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -258,6 +260,8 @@ export default function KurvaS() {
                         {row.deviation.toFixed(2)}%
                       </span>
                     </TableCell>
+                    <TableCell className="text-xs text-muted-foreground max-w-[150px]">{row.kendala}</TableCell>
+                    <TableCell className="text-xs text-muted-foreground max-w-[150px]">{row.solusi}</TableCell>
                     <TableCell>
                       <Badge
                         variant={
@@ -278,7 +282,6 @@ export default function KurvaS() {
                         {row.status}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-xs text-muted-foreground max-w-xs">{row.kendala}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -300,6 +303,8 @@ export default function KurvaS() {
                 <TableRow>
                   <TableHead className="w-12">Mgg</TableHead>
                   <TableHead>Pekerjaan Minggu</TableHead>
+                  <TableHead className="text-center">Realisasi Minggu</TableHead>
+                  <TableHead className="text-center">Realisasi Kumulatif</TableHead>
                   <TableHead>Kendala & Solusi</TableHead>
                   <TableHead>PIC</TableHead>
                   <TableHead>Link</TableHead>
@@ -310,6 +315,8 @@ export default function KurvaS() {
                   <TableRow key={r.id}>
                     <TableCell className="font-medium">{r.mingguke}</TableCell>
                     <TableCell className="text-sm">{r.deskripsiPekerjaanMinggu}</TableCell>
+                    <TableCell className="text-center text-sm">{r.realisasiPersentaseMinggu?.toFixed(1)}%</TableCell>
+                    <TableCell className="text-center text-sm font-medium">{r.realisasiPersentaseKumulatif?.toFixed(1)}%</TableCell>
                     <TableCell className="text-sm">
                       {r.kendala !== "-" && (
                         <div>
