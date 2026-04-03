@@ -260,6 +260,8 @@ export default function KurvaS() {
                         {row.deviation.toFixed(2)}%
                       </span>
                     </TableCell>
+                    <TableCell className="text-xs text-muted-foreground max-w-[150px]">{row.kendala}</TableCell>
+                    <TableCell className="text-xs text-muted-foreground max-w-[150px]">{row.solusi}</TableCell>
                     <TableCell>
                       <Badge
                         variant={
@@ -280,7 +282,6 @@ export default function KurvaS() {
                         {row.status}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-xs text-muted-foreground max-w-xs">{row.kendala}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
