@@ -180,7 +180,7 @@ export default function KurvaS() {
               <Line
                 type="monotone"
                 dataKey="planning"
-                stroke="#3b82f6"
+                stroke="#16a34a"
                 strokeWidth={2}
                 dot={false}
                 name="Target (Planning)"
@@ -188,7 +188,7 @@ export default function KurvaS() {
               <Line
                 type="monotone"
                 dataKey="realisasi"
-                stroke="#10b981"
+                stroke="#dc2626"
                 strokeWidth={2}
                 dot={false}
                 name="Realisasi"
