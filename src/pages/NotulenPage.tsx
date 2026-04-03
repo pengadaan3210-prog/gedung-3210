@@ -226,10 +226,6 @@ const NotulenPage = () => {
                           <Users className="h-3 w-3" /> Daftar Hadir
                         </a>
                       )}
-
-                      {!linkUndangan && !linkDaftarHadir && (
-                        <span className="text-xs text-muted-foreground">Undangan/Daftar Hadir tidak tersedia</span>
-                      )}
                     </div>
                   </div>
                 </CardContent>
