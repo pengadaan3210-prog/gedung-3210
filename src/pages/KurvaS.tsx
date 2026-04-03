@@ -434,10 +434,16 @@ export default function KurvaS() {
             <div className="space-y-2">
               <p className="text-sm font-medium text-muted-foreground">Min Deviasi</p>
               <p className="text-2xl font-bold text-purple-600">
-                {(detailData.length > 0
-                  ? Math.min(...detailData.map((d) => Math.abs(d.deviation)))
-                  : 0
-                ).toFixed(2)}
+                {(() => {
+                  const validDeviations = detailData.map((d) => d.deviation).filter(val => !isNaN(val) && isFinite(val));
+                  const minDeviation = validDeviations.length > 0 ? Math.min(...validDeviations) : 0;
+                  console.log('Min Deviasi Debug (negatif):', {
+                    detailDataLength: detailData.length,
+                    deviations: detailData.map(d => d.deviation),
+                    minDeviation
+                  });
+                  return minDeviation.toFixed(2);
+                })()}
                 %
               </p>
             </div>
