@@ -303,6 +303,8 @@ export default function KurvaS() {
                 <TableRow>
                   <TableHead className="w-12">Mgg</TableHead>
                   <TableHead>Pekerjaan Minggu</TableHead>
+                  <TableHead className="text-center">Realisasi Minggu</TableHead>
+                  <TableHead className="text-center">Realisasi Kumulatif</TableHead>
                   <TableHead>Kendala & Solusi</TableHead>
                   <TableHead>PIC</TableHead>
                   <TableHead>Link</TableHead>
@@ -313,6 +315,8 @@ export default function KurvaS() {
                   <TableRow key={r.id}>
                     <TableCell className="font-medium">{r.mingguke}</TableCell>
                     <TableCell className="text-sm">{r.deskripsiPekerjaanMinggu}</TableCell>
+                    <TableCell className="text-center text-sm">{r.realisasiPersentaseMinggu?.toFixed(1)}%</TableCell>
+                    <TableCell className="text-center text-sm font-medium">{r.realisasiPersentaseKumulatif?.toFixed(1)}%</TableCell>
                     <TableCell className="text-sm">
                       {r.kendala !== "-" && (
                         <div>
