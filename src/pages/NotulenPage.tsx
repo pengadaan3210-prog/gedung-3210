@@ -84,26 +84,18 @@ const NotulenPage = () => {
 
             const linkUndangan =
               item.linkUndangan ||
-              item.link_undangan ||
-              item.linkundangan ||
               findKey(/link[_\s]*undangan/i) ||
               '';
             const linkDaftarHadir =
               item.linkDaftarHadir ||
-              item.link_daftar_hadir ||
-              item.linkdaftarhadir ||
               findKey(/link[_\s]*(daftar[_\s]*hadir|hadir)/i) ||
               '';
             const linkNotulen =
               item.linkNotulen ||
-              item.link_notulen ||
-              item.linknotulen ||
               findKey(/link[_\s]*notulen/i) ||
               '';
             const linkDokumentasiFoto =
               item.linkDokumentasiFoto ||
-              item.link_dokumentasi_foto ||
-              item.linkdokumentasifoto ||
               findKey(/link[_\s]*(dokumentasi[_\s]*foto|dokumen)/i) ||
               '';
 
