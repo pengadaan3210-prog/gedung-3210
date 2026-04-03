@@ -67,6 +67,7 @@ export default function KurvaS() {
         deskripsi: p.deskripsiTahapan,
         pekerjaan: r?.deskripsiPekerjaanMinggu || "-",
         kendala: r?.kendala || "-",
+        solusi: r?.solusi || "-",
         pic: r?.pic || "-",
       };
     });
