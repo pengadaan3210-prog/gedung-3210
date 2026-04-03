@@ -415,7 +415,17 @@ export default function KurvaS() {
             </div>
             <div className="space-y-2">
               <p className="text-sm font-medium text-muted-foreground">Rata-rata Deviasi</p>
-              <p className="text-2xl font-bold">
+              <p
+                className={`text-2xl font-bold ${
+                  (() => {
+                    const avgDeviation =
+                      detailData.length > 0
+                        ? detailData.reduce((sum, d) => sum + d.deviation, 0) / detailData.length
+                        : 0;
+                    return avgDeviation >= 0 ? "text-green-600" : "text-red-600";
+                  })()
+                }`}
+              >
                 {(
                   detailData.reduce((sum, d) => sum + d.deviation, 0) / detailData.length
                 ).toFixed(2)}
@@ -424,7 +434,7 @@ export default function KurvaS() {
             </div>
             <div className="space-y-2">
               <p className="text-sm font-medium text-muted-foreground">Max Deviasi</p>
-              <p className="text-2xl font-bold">
+              <p className="text-2xl font-bold text-green-600">
                 {Math.max(
                   ...detailData.map((d) => Math.abs(d.deviation))
                 ).toFixed(2)}
@@ -433,15 +443,10 @@ export default function KurvaS() {
             </div>
             <div className="space-y-2">
               <p className="text-sm font-medium text-muted-foreground">Min Deviasi</p>
-              <p className="text-2xl font-bold text-purple-600">
+              <p className="text-2xl font-bold text-red-600">
                 {(() => {
                   const validDeviations = detailData.map((d) => d.deviation).filter(val => !isNaN(val) && isFinite(val));
                   const minDeviation = validDeviations.length > 0 ? Math.min(...validDeviations) : 0;
-                  console.log('Min Deviasi Debug (negatif):', {
-                    detailDataLength: detailData.length,
-                    deviations: detailData.map(d => d.deviation),
-                    minDeviation
-                  });
                   return minDeviation.toFixed(2);
                 })()}
                 %
