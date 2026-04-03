@@ -226,8 +226,9 @@ export default function KurvaS() {
                   <TableHead className="text-center">Kum Plan</TableHead>
                   <TableHead className="text-center">Kum Real</TableHead>
                   <TableHead className="text-center">Deviasi</TableHead>
-                  <TableHead>Status</TableHead>
                   <TableHead>Kendala</TableHead>
+                  <TableHead>Solusi</TableHead>
+                  <TableHead>Status</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
