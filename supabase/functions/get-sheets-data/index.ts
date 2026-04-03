@@ -234,8 +234,10 @@ function mapNotulen(raw: Record<string, string>[]) {
     tempat: r.tempat || '',
     peserta: r.peserta || '',
     ringkasan: r.ringkasan || '',
-    linkNotulen: r.link_notulen || '',
-    linkDokumentasiFoto: r.link_dokumentasi_foto || '',
+    linkNotulen: r.link_notulen || r.linkNotulen || r.linknotulen || '',
+    linkDokumentasiFoto: r.link_dokumentasi_foto || r.linkDokumentasiFoto || r.linkdokumentasifoto || '',
+    linkUndangan: r.link_undangan || r.linkUndangan || r.linkundangan || '',
+    linkDaftarHadir: r.link_daftar_hadir || r.linkDaftarHadir || r.linkdaftarhadir || '',
   }));
 }
 

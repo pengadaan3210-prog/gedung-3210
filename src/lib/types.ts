@@ -58,6 +58,8 @@ export interface Notulen {
   ringkasan: string;
   linkNotulen: string;
   linkDokumentasiFoto: string;
+  linkUndangan: string;
+  linkDaftarHadir: string;
 }
 
 export interface FotoProgres {

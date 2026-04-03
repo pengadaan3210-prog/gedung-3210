@@ -3,7 +3,7 @@ import LoadingState from "@/components/LoadingState";
 import ErrorState from "@/components/ErrorState";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ExternalLink, Calendar, MapPin, Users, FileText, Image, X } from "lucide-react";
+import { ExternalLink, Calendar, MapPin, Users, FileText, Image, X, Mail } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -77,9 +77,42 @@ const NotulenPage = () => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
           {paginatedData.map((item) => {
-            const isGDrive = item.linkDokumentasiFoto && isGoogleDriveUrl(item.linkDokumentasiFoto);
-            const thumbnailUrl = isGDrive ? getGoogleDriveImageUrl(item.linkDokumentasiFoto) : item.linkDokumentasiFoto;
-            const viewUrl = isGDrive ? getGoogleDriveViewUrl(item.linkDokumentasiFoto) : item.linkDokumentasiFoto;
+            const findKey = (regex: RegExp) => {
+              const key = Object.keys(item).find((k) => regex.test(k));
+              return key ? (item as any)[key] : '';
+            };
+
+            const linkUndangan =
+              item.linkUndangan ||
+              item.link_undangan ||
+              item.linkundangan ||
+              findKey(/link[_\s]*undangan/i) ||
+              '';
+            const linkDaftarHadir =
+              item.linkDaftarHadir ||
+              item.link_daftar_hadir ||
+              item.linkdaftarhadir ||
+              findKey(/link[_\s]*(daftar[_\s]*hadir|hadir)/i) ||
+              '';
+            const linkNotulen =
+              item.linkNotulen ||
+              item.link_notulen ||
+              item.linknotulen ||
+              findKey(/link[_\s]*notulen/i) ||
+              '';
+            const linkDokumentasiFoto =
+              item.linkDokumentasiFoto ||
+              item.link_dokumentasi_foto ||
+              item.linkdokumentasifoto ||
+              findKey(/link[_\s]*(dokumentasi[_\s]*foto|dokumen)/i) ||
+              '';
+
+            console.log('Notulen item raw:', item);
+            console.log('Notulen item links:', item.id, linkNotulen, linkDokumentasiFoto, linkUndangan, linkDaftarHadir);
+
+            const isGDrive = linkDokumentasiFoto && isGoogleDriveUrl(linkDokumentasiFoto);
+            const thumbnailUrl = isGDrive ? getGoogleDriveImageUrl(linkDokumentasiFoto) : linkDokumentasiFoto;
+            const viewUrl = isGDrive ? getGoogleDriveViewUrl(linkDokumentasiFoto) : linkDokumentasiFoto;
 
             return (
               <Card key={item.id} className="shadow-sm border-border overflow-hidden hover:shadow-md transition-shadow">
@@ -152,10 +185,10 @@ const NotulenPage = () => {
                       </Tooltip>
                     )}
 
-                    <div className="flex gap-3">
-                      {item.linkNotulen && (
+                    <div className="flex flex-wrap gap-3 gap-y-2">
+                      {linkNotulen && (
                         <a
-                          href={item.linkNotulen}
+                          href={linkNotulen}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="inline-flex items-center gap-1 text-xs text-accent hover:text-primary font-medium"
@@ -163,15 +196,39 @@ const NotulenPage = () => {
                           <FileText className="h-3 w-3" /> Lihat Notulen
                         </a>
                       )}
-                      {item.linkDokumentasiFoto && (
+                      {linkDokumentasiFoto && (
                         <a
-                          href={item.linkDokumentasiFoto}
+                          href={linkDokumentasiFoto}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="inline-flex items-center gap-1 text-xs text-accent hover:text-primary font-medium"
                         >
                           <Image className="h-3 w-3" /> Foto Dokumentasi
                         </a>
+                      )}
+                      {linkUndangan && (
+                        <a
+                          href={linkUndangan}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-xs text-accent hover:text-primary font-medium"
+                        >
+                          <Mail className="h-3 w-3" /> Undangan
+                        </a>
+                      )}
+                      {linkDaftarHadir && (
+                        <a
+                          href={linkDaftarHadir}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-xs text-accent hover:text-primary font-medium"
+                        >
+                          <Users className="h-3 w-3" /> Daftar Hadir
+                        </a>
+                      )}
+
+                      {!linkUndangan && !linkDaftarHadir && (
+                        <span className="text-xs text-muted-foreground">Undangan/Daftar Hadir tidak tersedia</span>
                       )}
                     </div>
                   </div>
