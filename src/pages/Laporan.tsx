@@ -21,6 +21,21 @@ const Laporan = () => {
 
   const normalize = (val?: string) => (val || "").trim().toLowerCase();
 
+  // Helper function to render output with red separator
+  const renderOutputWithRedSeparator = (outputDisplay: string) => {
+    const parts = outputDisplay.split(' | ');
+    return (
+      <span>
+        {parts.map((part, idx) => (
+          <span key={idx}>
+            {part}
+            {idx < parts.length - 1 && <span className="text-red-500 font-bold"> | </span>}
+          </span>
+        ))}
+      </span>
+    );
+  };
+
   const tahapanSummary = penyediaMapping.map((t) => {
     const items = t.filter === "Semua"
       ? data
@@ -116,7 +131,7 @@ const Laporan = () => {
                   return (
                     <TableRow key={pic}>
                       <TableCell className="font-medium">{pic}</TableCell>
-                      <TableCell className="text-sm text-muted-foreground">{outputDisplay}</TableCell>
+                      <TableCell className="text-sm text-muted-foreground">{renderOutputWithRedSeparator(outputDisplay)}</TableCell>
                       <TableCell className="text-center">{jumlahOutputUnik}</TableCell>
                       <TableCell className="text-center">{kegiatan}</TableCell>
                       <TableCell className="text-center font-bold text-accent">{avg}%</TableCell>

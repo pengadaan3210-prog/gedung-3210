@@ -107,6 +107,31 @@ export interface Mitigasi {
   keterangan: string;
 }
 
+export interface KurvaSPlanning {
+  id: string;
+  mingguke: number;
+  tanggalAwal: string;
+  tanggalAkhir: string;
+  deskripsiTahapan: string;
+  targetPersentaseMinggu: number;
+  targetPersentaseKumulatif: number;
+  keterangan: string;
+}
+
+export interface KurvaSRealisasi {
+  id: string;
+  mingguke: number;
+  tanggalAwal: string;
+  tanggalAkhir: string;
+  deskripsiPekerjaanMinggu: string;
+  realisasiPersentaseMinggu: number;
+  realisasiPersentaseKumulatif: number;
+  kendala: string;
+  solusi: string;
+  pic: string;
+  linkFotoProgres: string;
+}
+
 export interface SheetsData {
   kegiatan?: Kegiatan[];
   visualisasi?: Visualisasi[];
@@ -115,4 +140,6 @@ export interface SheetsData {
   fotoProgres?: FotoProgres[];
   stakeholder?: Stakeholder[];
   mitigasi?: Mitigasi[];
+  kurvaSPlanning?: KurvaSPlanning[];
+  kurvaSRealisasi?: KurvaSRealisasi[];
 }

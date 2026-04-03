@@ -10,6 +10,8 @@ import {
   Camera,
   Users,
   ShieldAlert,
+  TrendingUp,
+  ChevronDown,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
@@ -26,19 +28,29 @@ import {
   SidebarFooter,
   useSidebar,
 } from "@/components/ui/sidebar";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { Building2 } from "lucide-react";
+import { useState } from "react";
 
 const mainMenu = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
   { title: "Visualisasi Proyek", url: "/visualisasi", icon: Cuboid },
 ];
 
-const providerMenu = [
+const todoMenu = [
   { title: "Semua", url: "/semua", icon: LayoutDashboard },
   { title: "BPS Kabupaten Majalengka", url: "/bps-kabupaten", icon: Building2 },
   { title: "Konsultan Perancangan", url: "/perancangan", icon: PenTool },
   { title: "Kontraktor Pelaksana", url: "/konstruksi", icon: HardHat },
   { title: "Konsultan Pengawas", url: "/pengawas", icon: Eye },
+];
+
+const progresMenu = [
+  { title: "Kurva S", url: "/kurva-s", icon: TrendingUp },
 ];
 
 const mitigasiMenu = [
@@ -56,6 +68,8 @@ const supportMenu = [
 export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
+  const location = useLocation();
+  const [openProgres, setOpenProgres] = useState(true);
 
   const renderMenu = (items: typeof mainMenu) =>
     items.map((item) => (
@@ -73,6 +87,8 @@ export function AppSidebar() {
         </SidebarMenuButton>
       </SidebarMenuItem>
     ));
+
+  const isProgresActive = location.pathname.includes("/kurva-s");
 
   return (
     <Sidebar collapsible="icon" className="border-r-0">
@@ -109,7 +125,63 @@ export function AppSidebar() {
             Todo list - Penanggungjawab
           </SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu>{renderMenu(providerMenu)}</SidebarMenu>
+            <SidebarMenu>{renderMenu(todoMenu)}</SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarGroup>
+          <SidebarGroupLabel className="text-sidebar-foreground/50 text-[10px] uppercase tracking-wider font-semibold">
+            Progres Gedung
+          </SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <Collapsible
+                open={openProgres && !collapsed}
+                onOpenChange={setOpenProgres}
+                className="w-full"
+              >
+                <SidebarMenuItem>
+                  <CollapsibleTrigger asChild>
+                    <SidebarMenuButton
+                      className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground ${
+                        isProgresActive
+                          ? "bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary hover:text-sidebar-primary-foreground font-semibold"
+                          : "text-sidebar-foreground/80"
+                      }`}
+                    >
+                      <TrendingUp className="h-4 w-4 shrink-0" />
+                      {!collapsed && (
+                        <>
+                          <span className="flex-1">Kurva S</span>
+                          <ChevronDown className="h-3 w-3 transition-transform" />
+                        </>
+                      )}
+                    </SidebarMenuButton>
+                  </CollapsibleTrigger>
+                  {!collapsed && (
+                    <CollapsibleContent>
+                      <SidebarMenu className="pl-4">
+                        {progresMenu.map((item) => (
+                          <SidebarMenuItem key={item.title}>
+                            <SidebarMenuButton asChild>
+                              <NavLink
+                                to={item.url}
+                                end
+                                className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                                activeClassName="bg-sidebar-primary/20 text-sidebar-primary font-semibold"
+                              >
+                                <item.icon className="h-4 w-4 shrink-0" />
+                                <span>{item.title}</span>
+                              </NavLink>
+                            </SidebarMenuButton>
+                          </SidebarMenuItem>
+                        ))}
+                      </SidebarMenu>
+                    </CollapsibleContent>
+                  )}
+                </SidebarMenuItem>
+              </Collapsible>
+            </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
 

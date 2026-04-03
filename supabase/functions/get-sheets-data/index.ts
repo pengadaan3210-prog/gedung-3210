@@ -311,6 +311,36 @@ function mapFotoProgres(raw: Record<string, string>[]) {
   });
 }
 
+function mapKurvaSPlanning(raw: Record<string, string>[]) {
+  return raw.map((r) => ({
+    id: r.id || '',
+    mingguke: parseInt(r.minggu_ke || r.mingguke) || 0,
+    tanggalAwal: parseDate(r.tanggal_awal || r.tglawal || ''),
+    tanggalAkhir: parseDate(r.tanggal_akhir || r.tglakhir || ''),
+    deskripsiTahapan: r.deskripsi_tahapan || r.deskripsi || '',
+    targetPersentasePersentaseMinggu: parseFloat(r.target_persentase_minggu || r.target_persen_minggu || '0') || 0,
+    targetPersentaseMinggu: parseFloat(r.target_persentase_minggu || r.target_persen_minggu || '0') || 0,
+    targetPersentaseKumulatif: parseFloat(r.target_persentase_kumulatif || r.target_kumulatif || '0') || 0,
+    keterangan: r.keterangan || '',
+  }));
+}
+
+function mapKurvaSRealisasi(raw: Record<string, string>[]) {
+  return raw.map((r) => ({
+    id: r.id || '',
+    mingguke: parseInt(r.minggu_ke || r.mingguke) || 0,
+    tanggalAwal: parseDate(r.tanggal_awal || r.tglawal || ''),
+    tanggalAkhir: parseDate(r.tanggal_akhir || r.tglakhir || ''),
+    deskripsiPekerjaanMinggu: r.deskripsi_pekerjaan_minggu || r.deskripsi || '',
+    realisasiPersentaseMinggu: parseFloat(r.realisasi_persentase_minggu || r.realisasi_persen_minggu || '0') || 0,
+    realisasiPersentaseKumulatif: parseFloat(r.realisasi_persentase_kumulatif || r.realisasi_kumulatif || '0') || 0,
+    kendala: r.kendala || '-',
+    solusi: r.solusi || '-',
+    pic: r.pic || '',
+    linkFotoProgres: r.link_foto_progres || r.link_foto || '',
+  }));
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -354,7 +384,7 @@ serve(async (req) => {
     const sheetsParam = url.searchParams.get('sheets');
     const requestedSheets = sheetsParam
       ? sheetsParam.split(',')
-      : ['Kegiatan', 'Visualisasi', 'Dokumentasi', 'Notulen', 'Foto_Progres', 'Stakeholder', 'Mitigasi'];
+      : ['Kegiatan', 'Visualisasi', 'Dokumentasi', 'Notulen', 'Foto_Progres', 'Stakeholder', 'Mitigasi', 'Kurva_S_Planning', 'Kurva_S_Realisasi'];
 
     console.log(`📊 Requesting ${requestedSheets.length} sheets: ${requestedSheets.join(', ')}`);
 
@@ -392,6 +422,14 @@ serve(async (req) => {
         case 'Mitigasi':
           result.mitigasi = mapMitigasi(objects);
           console.log(`   → Mitigasi: ${objects.length} records mapped`);
+          break;
+        case 'Kurva_S_Planning':
+          result.kurvaSPlanning = mapKurvaSPlanning(objects);
+          console.log(`   → Kurva S Planning: ${objects.length} records mapped`);
+          break;
+        case 'Kurva_S_Realisasi':
+          result.kurvaSRealisasi = mapKurvaSRealisasi(objects);
+          console.log(`   → Kurva S Realisasi: ${objects.length} records mapped`);
           break;
         default: 
           result[sheet] = objects;
