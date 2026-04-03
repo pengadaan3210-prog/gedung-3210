@@ -178,8 +178,8 @@ export default function KurvaS() {
               </div>
             </div>
           </TableCell>
-          <TableCell className="text-center text-sm">{r.realisasiPersentaseMinggu?.toFixed(1)}%</TableCell>
-          <TableCell className="text-center text-sm font-medium">{r.realisasiPersentaseKumulatif?.toFixed(1)}%</TableCell>
+          <TableCell className="text-center text-sm whitespace-normal break-words max-w-[100px]">{r.realisasiPersentaseMinggu?.toFixed(1)}%</TableCell>
+          <TableCell className="text-center text-sm font-medium whitespace-normal break-words max-w-[120px]">{r.realisasiPersentaseKumulatif?.toFixed(1)}%</TableCell>
           <TableCell className="text-sm">
             {r.kendala !== "-" ? (
               <div>
@@ -207,7 +207,7 @@ export default function KurvaS() {
               <span className="text-muted-foreground text-sm">-</span>
             )}
           </TableCell>
-          <TableCell>
+          <TableCell className="whitespace-normal break-words max-w-[150px]">
             {r.linkLaporanMingguanPengawas && r.linkLaporanMingguanPengawas !== "-" ? (
               <a href={r.linkLaporanMingguanPengawas} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline text-sm">
                 Laporan →
@@ -216,7 +216,7 @@ export default function KurvaS() {
               <span className="text-muted-foreground text-sm">-</span>
             )}
           </TableCell>
-          <TableCell>
+          <TableCell className="whitespace-normal break-words max-w-[150px]">
             {r.linkLaporanMingguanPelaksana && r.linkLaporanMingguanPelaksana !== "-" ? (
               <a href={r.linkLaporanMingguanPelaksana} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline text-sm">
                 Laporan →
@@ -472,13 +472,13 @@ export default function KurvaS() {
                 <TableRow>
                   <TableHead className="w-12">Mgg</TableHead>
                   <TableHead>Pekerjaan Minggu</TableHead>
-                  <TableHead className="text-center">Realisasi Minggu</TableHead>
-                  <TableHead className="text-center">Realisasi Kumulatif</TableHead>
+                  <TableHead className="text-center whitespace-normal break-words max-w-[100px]">Realisasi Minggu</TableHead>
+                  <TableHead className="text-center whitespace-normal break-words max-w-[120px]">Realisasi Kumulatif</TableHead>
                   <TableHead>Kendala & Solusi</TableHead>
                   <TableHead>PIC</TableHead>
-                  <TableHead>Link</TableHead>
-                  <TableHead>Laporan Pengawas</TableHead>
-                  <TableHead>Laporan Pelaksana</TableHead>
+                  <TableHead className="whitespace-normal break-words max-w-[100px]">Link</TableHead>
+                  <TableHead className="whitespace-normal break-words max-w-[120px]">Laporan Pengawas</TableHead>
+                  <TableHead className="whitespace-normal break-words max-w-[120px]">Laporan Pelaksana</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
