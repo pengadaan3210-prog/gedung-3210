@@ -31,6 +31,14 @@ export default function KurvaS() {
   const planning = data?.kurvaSPlanning || [];
   const realisasi = data?.kurvaSRealisasi || [];
 
+  // Debug logging
+  console.log('Realisasi data:', realisasi.slice(0, 2)); // Show first 2 records
+  if (realisasi.length > 0) {
+    console.log('Sample realisasi record:', realisasi[0]);
+    console.log('linkLaporanMingguanPengawas:', realisasi[0].linkLaporanMingguanPengawas);
+    console.log('linkLaporanMingguanPelaksana:', realisasi[0].linkLaporanMingguanPelaksana);
+  }
+
   // Merge data untuk chart
   const formatDateIndo = (dateInput: string) => {
     if (!dateInput || dateInput === "-") return "-";
@@ -194,6 +202,24 @@ export default function KurvaS() {
             {r.linkFotoProgres && r.linkFotoProgres !== "-" ? (
               <a href={r.linkFotoProgres} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline text-sm">
                 Foto →
+              </a>
+            ) : (
+              <span className="text-muted-foreground text-sm">-</span>
+            )}
+          </TableCell>
+          <TableCell>
+            {r.linkLaporanMingguanPengawas && r.linkLaporanMingguanPengawas !== "-" ? (
+              <a href={r.linkLaporanMingguanPengawas} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline text-sm">
+                Laporan →
+              </a>
+            ) : (
+              <span className="text-muted-foreground text-sm">-</span>
+            )}
+          </TableCell>
+          <TableCell>
+            {r.linkLaporanMingguanPelaksana && r.linkLaporanMingguanPelaksana !== "-" ? (
+              <a href={r.linkLaporanMingguanPelaksana} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline text-sm">
+                Laporan →
               </a>
             ) : (
               <span className="text-muted-foreground text-sm">-</span>
@@ -451,6 +477,8 @@ export default function KurvaS() {
                   <TableHead>Kendala & Solusi</TableHead>
                   <TableHead>PIC</TableHead>
                   <TableHead>Link</TableHead>
+                  <TableHead>Laporan Pengawas</TableHead>
+                  <TableHead>Laporan Pelaksana</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

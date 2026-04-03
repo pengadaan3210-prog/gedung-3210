@@ -130,6 +130,8 @@ export interface KurvaSRealisasi {
   solusi: string;
   pic: string;
   linkFotoProgres: string;
+  linkLaporanMingguanPengawas: string;
+  linkLaporanMingguanPelaksana: string;
 }
 
 export interface SheetsData {

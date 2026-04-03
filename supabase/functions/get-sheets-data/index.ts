@@ -338,6 +338,8 @@ function mapKurvaSRealisasi(raw: Record<string, string>[]) {
     solusi: r.solusi || '-',
     pic: r.pic || '',
     linkFotoProgres: r.link_foto_progres || r.link_foto || '',
+    linkLaporanMingguanPengawas: r.link_laporan_mingguan_pengawas || r.linkLaporanMingguanPengawas || r.link_laporan_pengawas || r.link_pengawas || r['Link Laporan Mingguan Pengawas'] || r['link laporan mingguan pengawas'] || r['Laporan Mingguan Pengawas'] || r['laporan mingguan pengawas'] || '',
+    linkLaporanMingguanPelaksana: r.link_laporan_mingguan_pelaksana || r.linkLaporanMingguanPelaksana || r.link_laporan_pelaksana || r.link_pelaksana || r['Link Laporan Mingguan Pelaksana'] || r['link laporan mingguan pelaksana'] || r['Laporan Mingguan Pelaksana'] || r['laporan mingguan pelaksana'] || '',
   }));
 }
 
@@ -428,8 +430,14 @@ serve(async (req) => {
           console.log(`   → Kurva S Planning: ${objects.length} records mapped`);
           break;
         case 'Kurva_S_Realisasi':
+          console.log(`   → Kurva S Realisasi: ${objects.length} records`);
+          if (objects.length > 0) {
+            console.log(`     Sample record keys:`, Object.keys(objects[0]));
+            console.log(`     Sample link_laporan_mingguan_pengawas:`, objects[0].link_laporan_mingguan_pengawas || 'NOT FOUND');
+            console.log(`     Sample link_laporan_mingguan_pelaksana:`, objects[0].link_laporan_mingguan_pelaksana || 'NOT FOUND');
+          }
           result.kurvaSRealisasi = mapKurvaSRealisasi(objects);
-          console.log(`   → Kurva S Realisasi: ${objects.length} records mapped`);
+          console.log(`   → Kurva S Realisasi: ${result.kurvaSRealisasi.length} records mapped`);
           break;
         default: 
           result[sheet] = objects;
