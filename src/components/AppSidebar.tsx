@@ -61,8 +61,6 @@ const supportMenu = [
 export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
-  const location = useLocation();
-  const [openProgres, setOpenProgres] = useState(true);
 
   const renderMenu = (items: typeof mainMenu) =>
     items.map((item) => (
