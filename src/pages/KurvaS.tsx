@@ -32,6 +32,16 @@ export default function KurvaS() {
   const realisasi = data?.kurvaSRealisasi || [];
 
   // Merge data untuk chart
+  const formatDateIndo = (isoDate: string) => {
+    if (!isoDate) return "";
+    const d = new Date(isoDate);
+    if (Number.isNaN(d.getTime())) return isoDate;
+    const dd = String(d.getDate()).padStart(2, "0");
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    const yyyy = d.getFullYear();
+    return `${dd}/${mm}/${yyyy}`;
+  };
+
   const chartData = useMemo(() => {
     return planning.map((p) => {
       const r = realisasi.find((r) => r.mingguke === p.mingguke);
@@ -66,6 +76,8 @@ export default function KurvaS() {
         status,
         deskripsi: p.deskripsiTahapan,
         pekerjaan: r?.deskripsiPekerjaanMinggu || "-",
+        tanggalAwal: p.tanggalAwal || "",
+        tanggalAkhir: p.tanggalAkhir || "",
         kendala: r?.kendala || "-",
         solusi: r?.solusi || "-",
         pic: r?.pic || "-",
@@ -79,6 +91,56 @@ export default function KurvaS() {
     }
     return detailData;
   }, [detailData, sortBy]);
+
+  const realisasiRows = useMemo(() => {
+    return realisasi.map((r) => {
+      const planWeek = planning.find((p) => p.mingguke === r.mingguke);
+      return (
+        <TableRow key={r.id}>
+          <TableCell className="font-medium">{r.mingguke}</TableCell>
+          <TableCell className="text-sm">
+            <div className="space-y-1">
+              <div>{r.deskripsiPekerjaanMinggu}</div>
+              <div className="text-xs text-muted-foreground">
+                {planWeek && planWeek.tanggalAwal && planWeek.tanggalAkhir
+                  ? `${formatDateIndo(planWeek.tanggalAwal)} sd ${formatDateIndo(planWeek.tanggalAkhir)}`
+                  : "-"}
+              </div>
+            </div>
+          </TableCell>
+          <TableCell className="text-center text-sm">{r.realisasiPersentaseMinggu?.toFixed(1)}%</TableCell>
+          <TableCell className="text-center text-sm font-medium">{r.realisasiPersentaseKumulatif?.toFixed(1)}%</TableCell>
+          <TableCell className="text-sm">
+            {r.kendala !== "-" ? (
+              <div>
+                <span className="font-medium text-red-600">K: </span>
+                {r.kendala}
+                {r.solusi !== "-" && (
+                  <>
+                    <br />
+                    <span className="font-medium text-green-600">S: </span>
+                    {r.solusi}
+                  </>
+                )}
+              </div>
+            ) : (
+              <span className="text-muted-foreground">-</span>
+            )}
+          </TableCell>
+          <TableCell className="text-sm font-medium">{r.pic}</TableCell>
+          <TableCell>
+            {r.linkFotoProgres && r.linkFotoProgres !== "-" ? (
+              <a href={r.linkFotoProgres} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline text-sm">
+                Foto →
+              </a>
+            ) : (
+              <span className="text-muted-foreground text-sm">-</span>
+            )}
+          </TableCell>
+        </TableRow>
+      );
+    });
+  }, [realisasi, planning]);
 
   if (isLoading) return <LoadingState />;
   if (error) return <ErrorState message={error instanceof Error ? error.message : "Gagal memuat data Kurva S"} />;
@@ -181,15 +243,15 @@ export default function KurvaS() {
               <Line
                 type="monotone"
                 dataKey="planning"
-                stroke="#16a34a"
-                strokeWidth={2}
+                stroke="#3b82f6"
+                strokeWidth={7}
                 dot={false}
                 name="Target (Planning)"
               />
               <Line
                 type="monotone"
                 dataKey="realisasi"
-                stroke="#dc2626"
+                stroke="#f97316"
                 strokeWidth={2}
                 dot={false}
                 name="Realisasi"
@@ -227,8 +289,7 @@ export default function KurvaS() {
                   <TableHead className="text-center">Kum Plan</TableHead>
                   <TableHead className="text-center">Kum Real</TableHead>
                   <TableHead className="text-center">Deviasi</TableHead>
-                  <TableHead>Kendala</TableHead>
-                  <TableHead>Solusi</TableHead>
+                  <TableHead>Kendala & Solusi</TableHead>
                   <TableHead>Status</TableHead>
                 </TableRow>
               </TableHeader>
@@ -238,8 +299,12 @@ export default function KurvaS() {
                     <TableCell className="font-medium">{row.minggu}</TableCell>
                     <TableCell>
                       <div className="space-y-1">
-                        <div className="text-sm font-medium">{row.deskripsi}</div>
-                        <div className="text-xs text-muted-foreground">{row.pekerjaan}</div>
+                        <div className="text-sm font-medium">{row.pekerjaan || row.deskripsi}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {row.tanggalAwal && row.tanggalAkhir
+                            ? `${formatDateIndo(row.tanggalAwal)} sd ${formatDateIndo(row.tanggalAkhir)}`
+                            : "-"}
+                        </div>
                       </div>
                     </TableCell>
                     <TableCell className="text-center text-sm">{row.plan_persen.toFixed(1)}%</TableCell>
@@ -260,8 +325,27 @@ export default function KurvaS() {
                         {row.deviation.toFixed(2)}%
                       </span>
                     </TableCell>
-                    <TableCell className="text-xs text-muted-foreground max-w-[150px]">{row.kendala}</TableCell>
-                    <TableCell className="text-xs text-muted-foreground max-w-[150px]">{row.solusi}</TableCell>
+                    <TableCell className="text-xs text-muted-foreground max-w-[200px]">
+                      {row.kendala !== "-" || row.solusi !== "-" ? (
+                        <>
+                          {row.kendala !== "-" && (
+                            <span>
+                              <span className="font-semibold text-red-600">K: </span>
+                              {row.kendala}
+                            </span>
+                          )}
+                          {row.kendala !== "-" && row.solusi !== "-" && <br />}
+                          {row.solusi !== "-" && (
+                            <span>
+                              <span className="font-semibold text-green-600">S: </span>
+                              {row.solusi}
+                            </span>
+                          )}
+                        </>
+                      ) : (
+                        <span className="text-muted-foreground">-</span>
+                      )}
+                    </TableCell>
                     <TableCell>
                       <Badge
                         variant={
@@ -311,45 +395,7 @@ export default function KurvaS() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {realisasi.map((r) => (
-                  <TableRow key={r.id}>
-                    <TableCell className="font-medium">{r.mingguke}</TableCell>
-                    <TableCell className="text-sm">{r.deskripsiPekerjaanMinggu}</TableCell>
-                    <TableCell className="text-center text-sm">{r.realisasiPersentaseMinggu?.toFixed(1)}%</TableCell>
-                    <TableCell className="text-center text-sm font-medium">{r.realisasiPersentaseKumulatif?.toFixed(1)}%</TableCell>
-                    <TableCell className="text-sm">
-                      {r.kendala !== "-" && (
-                        <div>
-                          <span className="font-medium text-red-600">K: </span>
-                          {r.kendala}
-                          {r.solusi !== "-" && (
-                            <>
-                              <br />
-                              <span className="font-medium text-green-600">S: </span>
-                              {r.solusi}
-                            </>
-                          )}
-                        </div>
-                      )}
-                      {r.kendala === "-" && <span className="text-muted-foreground">-</span>}
-                    </TableCell>
-                    <TableCell className="text-sm font-medium">{r.pic}</TableCell>
-                    <TableCell>
-                      {r.linkFotoProgres && r.linkFotoProgres !== "-" ? (
-                        <a
-                          href={r.linkFotoProgres}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-blue-600 hover:underline text-sm"
-                        >
-                          Foto →
-                        </a>
-                      ) : (
-                        <span className="text-muted-foreground text-sm">-</span>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {realisasiRows}
               </TableBody>
             </Table>
           </div>
