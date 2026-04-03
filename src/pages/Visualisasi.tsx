@@ -232,9 +232,6 @@ const Visualisasi = () => {
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
                       <h2 className="text-xl font-bold text-foreground">{selectedImage.judul}</h2>
-                      <button onClick={() => setSelectedImage(null)} className="text-muted-foreground hover:text-foreground">
-                        <X className="h-6 w-6" />
-                      </button>
                     </div>
                     
                     {selectedImage.deskripsi && (
