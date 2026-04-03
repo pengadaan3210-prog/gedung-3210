@@ -58,15 +58,7 @@ All colors MUST be HSL.
     --sidebar-border: 215 50% 32%;
     --sidebar-ring: 200 75% 55%;
   }
-}
 
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
-
-html {
-  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
-}
-
-@layer base {
   * {
     @apply border-border;
   }
@@ -85,4 +77,8 @@ html {
     height: 0;
     display: none;
   }
+}
+
+html {
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
 }
