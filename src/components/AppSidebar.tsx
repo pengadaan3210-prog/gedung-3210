@@ -52,7 +52,7 @@ const mitigasiMenu = [
 ];
 
 const supportMenu = [
-  { title: "Dokumentasi", url: "/dokumentasi", icon: FolderOpen },
+  { title: "Arsip", url: "/dokumentasi", icon: FolderOpen },
   { title: "Notulen Rapat", url: "/notulen", icon: BookOpen },
   { title: "Foto Progres", url: "/foto-progres", icon: Camera },
   { title: "Laporan", url: "/laporan", icon: FileBarChart },

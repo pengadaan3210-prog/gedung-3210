@@ -46,7 +46,7 @@ const Dokumentasi = () => {
   return (
     <div className="p-6 space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-foreground">Dokumentasi</h1>
+        <h1 className="text-2xl font-bold text-foreground">Arsip</h1>
         <p className="text-sm text-muted-foreground mt-1">
           Daftar dokumen kontrak dan bukti dukung kegiatan
         </p>
