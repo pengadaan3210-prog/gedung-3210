@@ -112,7 +112,7 @@ const NotulenPage = () => {
                   <div className="flex flex-col gap-3">
                     {thumbnailUrl && (
                       <div
-                        className="w-full aspect-[4/3] min-h-[180px] bg-muted rounded-xl border border-border/70 overflow-hidden cursor-pointer group"
+                        className="w-full aspect-[4/3] min-h-[135px] bg-muted rounded-xl border border-border/70 overflow-hidden cursor-pointer group"
                         onClick={() => setSelectedImage({ ...item, thumbnailUrl, viewUrl })}
                       >
                         <img
