@@ -111,14 +111,14 @@ const NotulenPage = () => {
                 <CardContent className="p-4">
                   <div className="flex flex-col gap-3">
                     {thumbnailUrl && (
-                      <div 
-                        className="w-full h-16 bg-muted rounded border overflow-hidden cursor-pointer hover:opacity-80 transition-opacity relative"
+                      <div
+                        className="w-full aspect-[4/3] min-h-[180px] bg-muted rounded-xl border border-border/70 overflow-hidden cursor-pointer group"
                         onClick={() => setSelectedImage({ ...item, thumbnailUrl, viewUrl })}
                       >
                         <img
                           src={thumbnailUrl}
                           alt="Dokumentasi"
-                          className="w-full h-full object-cover"
+                          className="w-full h-full object-cover transition duration-300 group-hover:scale-105"
                           onError={(e) => {
                             console.log('Image failed to load:', thumbnailUrl);
                             (e.target as HTMLImageElement).style.display = 'none';
@@ -128,7 +128,7 @@ const NotulenPage = () => {
                         />
                         <div className="hidden w-full h-full flex items-center justify-center text-muted-foreground absolute inset-0 bg-muted">
                           <div className="flex flex-col items-center gap-1">
-                            <Image className="w-5 h-5" />
+                            <Image className="w-6 h-6" />
                             <span className="text-xs">Gambar</span>
                           </div>
                         </div>
