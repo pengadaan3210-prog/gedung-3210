@@ -3,12 +3,12 @@ import LoadingState from "@/components/LoadingState";
 import ErrorState from "@/components/ErrorState";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ExternalLink, Calendar, MapPin, Users, FileText, Image, X, Mail } from "lucide-react";
+import { ExternalLink, Calendar, MapPin, Users, FileText, Image, Mail, ChevronLeft, ChevronRight } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { useEffect, useState } from "react";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { useState } from "react";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { isGoogleDriveUrl, getGoogleDriveImageUrl, getGoogleDriveViewUrl } from "@/lib/utils";
 
 const NotulenPage = () => {
@@ -26,35 +26,40 @@ const NotulenPage = () => {
     return new Date(b.tanggalRapat).getTime() - new Date(a.tanggalRapat).getTime();
   });
 
-  // Filter based on search
   const filtered = sorted.filter((item) => {
     if (!search) return true;
-    const searchLower = search.toLowerCase();
+    const s = search.toLowerCase();
     return (
-      item.judulRapat?.toLowerCase().includes(searchLower) ||
-      item.ringkasan?.toLowerCase().includes(searchLower) ||
-      item.peserta?.toLowerCase().includes(searchLower) ||
-      item.jenisRapat?.toLowerCase().includes(searchLower) ||
-      item.tempat?.toLowerCase().includes(searchLower)
+      item.judulRapat?.toLowerCase().includes(s) ||
+      item.ringkasan?.toLowerCase().includes(s) ||
+      item.peserta?.toLowerCase().includes(s) ||
+      item.jenisRapat?.toLowerCase().includes(s) ||
+      item.tempat?.toLowerCase().includes(s)
     );
   });
 
-  // Pagination
   const totalPages = Math.max(1, Math.ceil(filtered.length / ITEMS_PER_PAGE));
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const safePage = Math.min(currentPage, totalPages);
+  const startIndex = (safePage - 1) * ITEMS_PER_PAGE;
   const paginatedData = filtered.slice(startIndex, startIndex + ITEMS_PER_PAGE);
-  const currentStart = filtered.length > 0 ? startIndex + 1 : 0;
-  const currentEnd = Math.min(filtered.length, startIndex + paginatedData.length);
 
-  useEffect(() => {
-    if (currentPage > totalPages) {
-      setCurrentPage(totalPages);
+  const goPage = (page: number) => setCurrentPage(Math.max(1, Math.min(page, totalPages)));
+
+  // Generate page numbers for pagination
+  const getPageNumbers = () => {
+    const pages: (number | 'ellipsis')[] = [];
+    if (totalPages <= 5) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i);
+    } else {
+      pages.push(1);
+      if (safePage > 3) pages.push('ellipsis');
+      for (let i = Math.max(2, safePage - 1); i <= Math.min(totalPages - 1, safePage + 1); i++) {
+        pages.push(i);
+      }
+      if (safePage < totalPages - 2) pages.push('ellipsis');
+      pages.push(totalPages);
     }
-  }, [currentPage, totalPages]);
-
-  const goPage = (page: number) => {
-    const nextPage = Math.max(1, Math.min(page, totalPages));
-    setCurrentPage(nextPage);
+    return pages;
   };
 
   return (
@@ -70,10 +75,7 @@ const NotulenPage = () => {
         <Input
           placeholder="Cari notulen rapat..."
           value={search}
-          onChange={(e) => {
-            setSearch(e.target.value);
-            setCurrentPage(1); // Reset to first page when searching
-          }}
+          onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
           className="max-w-xs"
         />
       </div>
@@ -90,22 +92,10 @@ const NotulenPage = () => {
               return key ? (item as any)[key] : '';
             };
 
-            const linkUndangan =
-              item.linkUndangan ||
-              findKey(/link[_\s]*undangan/i) ||
-              '';
-            const linkDaftarHadir =
-              item.linkDaftarHadir ||
-              findKey(/link[_\s]*(daftar[_\s]*hadir|hadir)/i) ||
-              '';
-            const linkNotulen =
-              item.linkNotulen ||
-              findKey(/link[_\s]*notulen/i) ||
-              '';
-            const linkDokumentasiFoto =
-              item.linkDokumentasiFoto ||
-              findKey(/link[_\s]*(dokumentasi[_\s]*foto|dokumen)/i) ||
-              '';
+            const linkUndangan = item.linkUndangan || findKey(/link[_\s]*undangan/i) || '';
+            const linkDaftarHadir = item.linkDaftarHadir || findKey(/link[_\s]*(daftar[_\s]*hadir|hadir)/i) || '';
+            const linkNotulen = item.linkNotulen || findKey(/link[_\s]*notulen/i) || '';
+            const linkDokumentasiFoto = item.linkDokumentasiFoto || findKey(/link[_\s]*(dokumentasi[_\s]*foto|dokumen)/i) || '';
 
             const isGDrive = linkDokumentasiFoto && isGoogleDriveUrl(linkDokumentasiFoto);
             const thumbnailUrl = isGDrive ? getGoogleDriveImageUrl(linkDokumentasiFoto) : linkDokumentasiFoto;
@@ -124,10 +114,7 @@ const NotulenPage = () => {
                           src={thumbnailUrl}
                           alt="Dokumentasi"
                           className="w-full h-full object-cover transition duration-300 group-hover:scale-105"
-                          onError={(e) => {
-                            console.log('Image failed to load:', thumbnailUrl);
-                            (e.target as HTMLImageElement).style.display = 'none';
-                          }}
+                          onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                         />
                       </div>
                     )}
@@ -148,16 +135,10 @@ const NotulenPage = () => {
                             </span>
                           )}
                           {item.tempat && (
-                            <span className="flex items-center gap-1">
-                              <MapPin className="h-3 w-3" />
-                              {item.tempat}
-                            </span>
+                            <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{item.tempat}</span>
                           )}
                           {item.peserta && (
-                            <span className="flex items-center gap-1">
-                              <Users className="h-3 w-3" />
-                              {item.peserta}
-                            </span>
+                            <span className="flex items-center gap-1"><Users className="h-3 w-3" />{item.peserta}</span>
                           )}
                         </div>
                       </div>
@@ -168,50 +149,28 @@ const NotulenPage = () => {
                         <TooltipTrigger asChild>
                           <p className="text-sm text-foreground/80 leading-snug line-clamp-2 cursor-help">{item.ringkasan}</p>
                         </TooltipTrigger>
-                        <TooltipContent className="max-w-xs text-sm">
-                          {item.ringkasan}
-                        </TooltipContent>
+                        <TooltipContent className="max-w-xs text-sm">{item.ringkasan}</TooltipContent>
                       </Tooltip>
                     )}
 
                     <div className="flex flex-wrap gap-2 gap-y-2">
                       {linkNotulen && (
-                        <a
-                          href={linkNotulen}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 text-xs text-accent hover:text-primary font-medium"
-                        >
+                        <a href={linkNotulen} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-accent hover:text-primary font-medium">
                           <FileText className="h-3 w-3" /> Lihat Notulen
                         </a>
                       )}
                       {linkDokumentasiFoto && (
-                        <a
-                          href={linkDokumentasiFoto}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 text-xs text-accent hover:text-primary font-medium"
-                        >
+                        <a href={linkDokumentasiFoto} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-accent hover:text-primary font-medium">
                           <Image className="h-3 w-3" /> Foto Dokumentasi
                         </a>
                       )}
                       {linkUndangan && (
-                        <a
-                          href={linkUndangan}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 text-xs text-accent hover:text-primary font-medium"
-                        >
+                        <a href={linkUndangan} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-accent hover:text-primary font-medium">
                           <Mail className="h-3 w-3" /> Undangan
                         </a>
                       )}
                       {linkDaftarHadir && (
-                        <a
-                          href={linkDaftarHadir}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 text-xs text-accent hover:text-primary font-medium"
-                        >
+                        <a href={linkDaftarHadir} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-accent hover:text-primary font-medium">
                           <Users className="h-3 w-3" /> Daftar Hadir
                         </a>
                       )}
@@ -224,42 +183,48 @@ const NotulenPage = () => {
         </div>
       )}
 
+      {/* Pagination */}
       {filtered.length > 0 && (
-        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between py-3 px-2 border-t border-border/20">
-          <span className="text-sm text-muted-foreground">
-            Menampilkan {currentStart}-{currentEnd} dari {filtered.length} foto · Halaman {currentPage} dari {totalPages}
-          </span>
-          {totalPages > 1 && (
-            <div className="flex flex-wrap items-center gap-2">
-            <button
-              onClick={() => goPage(1)}
-              disabled={currentPage === 1}
-              className="rounded-lg px-3 py-2 border border-border/40 bg-background text-sm font-medium hover:bg-muted/50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              Awal
-            </button>
-            <button
-              onClick={() => goPage(currentPage - 1)}
-              disabled={currentPage === 1}
-              className="rounded-lg px-3 py-2 border border-border/40 bg-background text-sm font-medium hover:bg-muted/50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              Sebelumnya
-            </button>
-            <button
-              onClick={() => goPage(currentPage + 1)}
-              disabled={currentPage === totalPages}
-              className="rounded-lg px-3 py-2 border border-border/40 bg-background text-sm font-medium hover:bg-muted/50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              Berikut
-            </button>
-            <button
-              onClick={() => goPage(totalPages)}
-              disabled={currentPage === totalPages}
-              className="rounded-lg px-3 py-2 border border-border/40 bg-background text-sm font-medium hover:bg-muted/50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              Akhir
-            </button>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between py-4 px-2 border-t border-border/30">
+          <div className="text-sm text-muted-foreground space-y-0.5">
+            <p>{startIndex + 1}–{Math.min(filtered.length, startIndex + ITEMS_PER_PAGE)} dari {filtered.length} notulen</p>
+            <p>Halaman {safePage} dari {totalPages}</p>
           </div>
+          {totalPages > 1 && (
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => goPage(safePage - 1)}
+                disabled={safePage === 1}
+                className="inline-flex items-center justify-center h-8 w-8 rounded-md border border-border/40 bg-background text-sm hover:bg-muted/60 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </button>
+              {getPageNumbers().map((p, i) =>
+                p === 'ellipsis' ? (
+                  <span key={`e${i}`} className="px-1 text-muted-foreground">…</span>
+                ) : (
+                  <button
+                    key={p}
+                    onClick={() => goPage(p)}
+                    className={`inline-flex items-center justify-center h-8 min-w-[2rem] rounded-md border text-sm font-medium transition-colors ${
+                      p === safePage
+                        ? 'border-primary bg-primary text-primary-foreground'
+                        : 'border-border/40 bg-background hover:bg-muted/60'
+                    }`}
+                  >
+                    {p}
+                  </button>
+                )
+              )}
+              <button
+                onClick={() => goPage(safePage + 1)}
+                disabled={safePage === totalPages}
+                className="inline-flex items-center justify-center h-8 w-8 rounded-md border border-border/40 bg-background text-sm hover:bg-muted/60 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            </div>
+          )}
         </div>
       )}
 
@@ -268,14 +233,8 @@ const NotulenPage = () => {
         <DialogContent className="max-w-4xl w-full h-auto max-h-[90vh] overflow-y-auto">
           {selectedImage && (
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl font-bold text-foreground">{selectedImage.judulRapat}</h2>
-              </div>
-
-              {selectedImage.jenisRapat && (
-                <Badge variant="outline" className="w-fit">{selectedImage.jenisRapat}</Badge>
-              )}
-
+              <h2 className="text-xl font-bold text-foreground">{selectedImage.judulRapat}</h2>
+              {selectedImage.jenisRapat && <Badge variant="outline" className="w-fit">{selectedImage.jenisRapat}</Badge>}
               <div className="flex gap-2 flex-wrap text-sm text-muted-foreground">
                 {selectedImage.tanggalRapat && (
                   <span className="flex items-center gap-1">
@@ -283,38 +242,16 @@ const NotulenPage = () => {
                     {new Date(selectedImage.tanggalRapat).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}
                   </span>
                 )}
-                {selectedImage.tempat && (
-                  <span className="flex items-center gap-1">
-                    <MapPin className="h-4 w-4" />
-                    {selectedImage.tempat}
-                  </span>
-                )}
-                {selectedImage.peserta && (
-                  <span className="flex items-center gap-1">
-                    <Users className="h-4 w-4" />
-                    {selectedImage.peserta}
-                  </span>
-                )}
+                {selectedImage.tempat && <span className="flex items-center gap-1"><MapPin className="h-4 w-4" />{selectedImage.tempat}</span>}
+                {selectedImage.peserta && <span className="flex items-center gap-1"><Users className="h-4 w-4" />{selectedImage.peserta}</span>}
               </div>
-
-              {selectedImage.ringkasan && (
-                <p className="text-sm text-muted-foreground">{selectedImage.ringkasan}</p>
-              )}
-
+              {selectedImage.ringkasan && <p className="text-sm text-muted-foreground">{selectedImage.ringkasan}</p>}
               {selectedImage.thumbnailUrl ? (
                 <div className="space-y-4">
-                  <img
-                    src={selectedImage.thumbnailUrl}
-                    alt={selectedImage.judulRapat}
-                    className="w-full rounded-lg"
-                  />
+                  <img src={selectedImage.thumbnailUrl} alt={selectedImage.judulRapat} className="w-full rounded-lg" />
                   {selectedImage.viewUrl && (
-                    <Button
-                      onClick={() => window.open(selectedImage.viewUrl, '_blank')}
-                      className="w-full gap-2"
-                    >
-                      <ExternalLink className="h-4 w-4" />
-                      Buka di Google Drive
+                    <Button onClick={() => window.open(selectedImage.viewUrl, '_blank')} className="w-full gap-2">
+                      <ExternalLink className="h-4 w-4" /> Buka di Google Drive
                     </Button>
                   )}
                 </div>
