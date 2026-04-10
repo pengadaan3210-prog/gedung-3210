@@ -149,6 +149,7 @@ export interface SheetsData {
   visualisasi?: Visualisasi[];
   dokumentasi?: Dokumentasi[];
   notulen?: Notulen[];
+  jadwalMonitoring?: JadwalMonitoring[];
   fotoProgres?: FotoProgres[];
   stakeholder?: Stakeholder[];
   mitigasi?: Mitigasi[];
