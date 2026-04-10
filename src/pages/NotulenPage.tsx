@@ -16,7 +16,7 @@ const NotulenPage = () => {
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedImage, setSelectedImage] = useState<any>(null);
-  const ITEMS_PER_PAGE = 8;
+  const ITEMS_PER_PAGE = 12;
 
   if (isLoading) return <div className="p-6"><LoadingState /></div>;
   if (isError) return <div className="p-6"><ErrorState onRetry={() => refetch()} /></div>;
@@ -75,7 +75,7 @@ const NotulenPage = () => {
           {search ? "Tidak ada notulen yang cocok dengan pencarian" : "Belum ada data notulen"}
         </p>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {paginatedData.map((item) => {
             const findKey = (regex: RegExp) => {
               const key = Object.keys(item).find((k) => regex.test(k));
