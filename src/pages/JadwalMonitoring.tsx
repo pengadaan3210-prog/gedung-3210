@@ -38,10 +38,10 @@ const JadwalMonitoring = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const ITEMS_PER_PAGE = 10;
 
+  const normalizedData = useMemo(() => (data || []).map(normalizeScheduleRow), [data]);
+
   if (isLoading) return <div className="p-6"><LoadingState /></div>;
   if (isError) return <div className="p-6"><ErrorState onRetry={() => refetch()} /></div>;
-
-  const normalizedData = useMemo(() => data.map(normalizeScheduleRow), [data]);
 
   const sorted = [...normalizedData].sort((a, b) => {
     if (!a.tanggal || !b.tanggal) return 0;
