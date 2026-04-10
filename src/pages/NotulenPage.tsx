@@ -7,7 +7,7 @@ import { ExternalLink, Calendar, MapPin, Users, FileText, Image, X, Mail } from 
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { isGoogleDriveUrl, getGoogleDriveImageUrl, getGoogleDriveViewUrl } from "@/lib/utils";
 
@@ -16,7 +16,7 @@ const NotulenPage = () => {
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedImage, setSelectedImage] = useState<any>(null);
-  const ITEMS_PER_PAGE = 12;
+  const ITEMS_PER_PAGE = 8;
 
   if (isLoading) return <div className="p-6"><LoadingState /></div>;
   if (isError) return <div className="p-6"><ErrorState onRetry={() => refetch()} /></div>;
@@ -43,6 +43,14 @@ const NotulenPage = () => {
   const totalPages = Math.max(1, Math.ceil(filtered.length / ITEMS_PER_PAGE));
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const paginatedData = filtered.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  const currentStart = filtered.length > 0 ? startIndex + 1 : 0;
+  const currentEnd = Math.min(filtered.length, startIndex + paginatedData.length);
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
 
   const goPage = (page: number) => {
     const nextPage = Math.max(1, Math.min(page, totalPages));
@@ -216,12 +224,13 @@ const NotulenPage = () => {
         </div>
       )}
 
-      {filtered.length > ITEMS_PER_PAGE && (
+      {filtered.length > 0 && (
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between py-3 px-2 border-t border-border/20">
           <span className="text-sm text-muted-foreground">
-            Halaman {currentPage} dari {totalPages} ({filtered.length} notulen)
+            Menampilkan {currentStart}-{currentEnd} dari {filtered.length} foto · Halaman {currentPage} dari {totalPages}
           </span>
-          <div className="flex flex-wrap items-center gap-2">
+          {totalPages > 1 && (
+            <div className="flex flex-wrap items-center gap-2">
             <button
               onClick={() => goPage(1)}
               disabled={currentPage === 1}
