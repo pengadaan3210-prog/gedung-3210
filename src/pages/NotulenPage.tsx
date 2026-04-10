@@ -16,7 +16,7 @@ const NotulenPage = () => {
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedImage, setSelectedImage] = useState<any>(null);
-  const ITEMS_PER_PAGE = 16;
+  const ITEMS_PER_PAGE = 8;
 
   if (isLoading) return <div className="p-6"><LoadingState /></div>;
   if (isError) return <div className="p-6"><ErrorState onRetry={() => refetch()} /></div>;
@@ -75,7 +75,7 @@ const NotulenPage = () => {
           {search ? "Tidak ada notulen yang cocok dengan pencarian" : "Belum ada data notulen"}
         </p>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {paginatedData.map((item) => {
             const findKey = (regex: RegExp) => {
               const key = Object.keys(item).find((k) => regex.test(k));
@@ -99,20 +99,17 @@ const NotulenPage = () => {
               findKey(/link[_\s]*(dokumentasi[_\s]*foto|dokumen)/i) ||
               '';
 
-            console.log('Notulen item raw:', item);
-            console.log('Notulen item links:', item.id, linkNotulen, linkDokumentasiFoto, linkUndangan, linkDaftarHadir);
-
             const isGDrive = linkDokumentasiFoto && isGoogleDriveUrl(linkDokumentasiFoto);
             const thumbnailUrl = isGDrive ? getGoogleDriveImageUrl(linkDokumentasiFoto) : linkDokumentasiFoto;
             const viewUrl = isGDrive ? getGoogleDriveViewUrl(linkDokumentasiFoto) : linkDokumentasiFoto;
 
             return (
-              <Card key={item.id} className="shadow-sm border-border overflow-hidden hover:shadow-md transition-shadow">
+              <Card key={item.id} className="shadow-sm border-border overflow-hidden hover:shadow-lg transition-shadow duration-200">
                 <CardContent className="p-4">
                   <div className="flex flex-col gap-3">
                     {thumbnailUrl && (
                       <div
-                        className="w-full aspect-[4/3] min-h-[135px] bg-muted rounded-xl border border-border/70 overflow-hidden cursor-pointer group"
+                        className="w-full h-24 bg-muted rounded-lg border border-border/50 overflow-hidden cursor-pointer group"
                         onClick={() => setSelectedImage({ ...item, thumbnailUrl, viewUrl })}
                       >
                         <img
@@ -122,16 +119,8 @@ const NotulenPage = () => {
                           onError={(e) => {
                             console.log('Image failed to load:', thumbnailUrl);
                             (e.target as HTMLImageElement).style.display = 'none';
-                            (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
                           }}
-                          onLoad={() => console.log('Image loaded successfully:', thumbnailUrl)}
                         />
-                        <div className="hidden w-full h-full flex items-center justify-center text-muted-foreground absolute inset-0 bg-muted">
-                          <div className="flex flex-col items-center gap-1">
-                            <Image className="w-6 h-6" />
-                            <span className="text-xs">Gambar</span>
-                          </div>
-                        </div>
                       </div>
                     )}
 
@@ -143,7 +132,7 @@ const NotulenPage = () => {
                             <Badge variant="outline" className="text-[10px] shrink-0">{item.jenisRapat}</Badge>
                           )}
                         </div>
-                        <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
+                        <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
                           {item.tanggalRapat && (
                             <span className="flex items-center gap-1">
                               <Calendar className="h-3 w-3" />
@@ -177,7 +166,7 @@ const NotulenPage = () => {
                       </Tooltip>
                     )}
 
-                    <div className="flex flex-wrap gap-3 gap-y-2">
+                    <div className="flex flex-wrap gap-2 gap-y-2">
                       {linkNotulen && (
                         <a
                           href={linkNotulen}
@@ -228,36 +217,36 @@ const NotulenPage = () => {
       )}
 
       {filtered.length > ITEMS_PER_PAGE && (
-        <div className="flex items-center justify-between py-3 px-2">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between py-3 px-2 border-t border-border/20">
           <span className="text-sm text-muted-foreground">
             Halaman {currentPage} dari {totalPages} ({filtered.length} notulen)
           </span>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <button
               onClick={() => goPage(1)}
               disabled={currentPage === 1}
-              className="rounded px-3 py-1 border border-border bg-background text-sm disabled:opacity-50"
+              className="rounded-lg px-3 py-2 border border-border/40 bg-background text-sm font-medium hover:bg-muted/50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
               Awal
             </button>
             <button
               onClick={() => goPage(currentPage - 1)}
               disabled={currentPage === 1}
-              className="rounded px-3 py-1 border border-border bg-background text-sm disabled:opacity-50"
+              className="rounded-lg px-3 py-2 border border-border/40 bg-background text-sm font-medium hover:bg-muted/50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
               Sebelumnya
             </button>
             <button
               onClick={() => goPage(currentPage + 1)}
               disabled={currentPage === totalPages}
-              className="rounded px-3 py-1 border border-border bg-background text-sm disabled:opacity-50"
+              className="rounded-lg px-3 py-2 border border-border/40 bg-background text-sm font-medium hover:bg-muted/50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
               Berikut
             </button>
             <button
               onClick={() => goPage(totalPages)}
               disabled={currentPage === totalPages}
-              className="rounded px-3 py-1 border border-border bg-background text-sm disabled:opacity-50"
+              className="rounded-lg px-3 py-2 border border-border/40 bg-background text-sm font-medium hover:bg-muted/50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
               Akhir
             </button>
