@@ -2,10 +2,13 @@ import { useJadwalMonitoring } from "@/hooks/useSheetsData";
 import LoadingState from "@/components/LoadingState";
 import ErrorState from "@/components/ErrorState";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, FileText, ExternalLink } from "lucide-react";
+import { Calendar, ExternalLink, Edit3, UploadCloud } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { useMemo, useRef, useState } from "react";
 import {
   Table,
   TableBody,
@@ -15,16 +18,32 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
+const PROJECT_ID = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+
+const normalizeScheduleRow = (row: any) => ({
+  ...row,
+  hari_ke_x: row.hari_ke_x || row["hari_ke-x"] || row["hari ke x"] || row["hari kex"] || row["hari"] || "",
+  catatan_lapangan: row.catatan_lapangan || row["catatan lapangan"] || row["catatan_lapangan"] || "",
+  link_dokumen_bukti: row.link_dokumen_bukti || row["link_dokumen/bukti"] || row["link dokumen/bukti"] || row.link_dokumen || "",
+});
+
 const JadwalMonitoring = () => {
   const { data, isLoading, isError, refetch } = useJadwalMonitoring();
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [selectedRow, setSelectedRow] = useState<any>(null);
+  const [noteDraft, setNoteDraft] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const ITEMS_PER_PAGE = 10;
 
   if (isLoading) return <div className="p-6"><LoadingState /></div>;
   if (isError) return <div className="p-6"><ErrorState onRetry={() => refetch()} /></div>;
 
-  const sorted = [...data].sort((a, b) => {
+  const normalizedData = useMemo(() => data.map(normalizeScheduleRow), [data]);
+
+  const sorted = [...normalizedData].sort((a, b) => {
     if (!a.tanggal || !b.tanggal) return 0;
     return new Date(b.tanggal).getTime() - new Date(a.tanggal).getTime();
   });
@@ -35,7 +54,8 @@ const JadwalMonitoring = () => {
     return (
       item.karyawan?.toLowerCase().includes(searchLower) ||
       item.status?.toLowerCase().includes(searchLower) ||
-      item.catatan_lapangan?.toLowerCase().includes(searchLower)
+      item.catatan_lapangan?.toLowerCase().includes(searchLower) ||
+      item.hari_ke_x?.toString().toLowerCase().includes(searchLower)
     );
   });
 
@@ -57,6 +77,75 @@ const JadwalMonitoring = () => {
       default:
         return <Badge variant="secondary">{status || "-"}</Badge>;
     }
+  };
+
+  const openNoteEditor = (row: any) => {
+    setSelectedRow(row);
+    setNoteDraft(row.catatan_lapangan || "");
+    setSaveError("");
+  };
+
+  const closeNoteEditor = () => {
+    setSelectedRow(null);
+    setNoteDraft("");
+    setSaveError("");
+  };
+
+  const handleSaveNote = async () => {
+    if (!selectedRow) return;
+    const rowNumber = parseInt(selectedRow.__rowNumber || selectedRow.rowNumber || "0", 10);
+
+    if (!rowNumber || rowNumber <= 0) {
+      setSaveError("Tidak dapat menentukan baris sheet untuk update.");
+      return;
+    }
+
+    setIsSaving(true);
+    setSaveError("");
+
+    try {
+      const res = await fetch(`https://${PROJECT_ID}.supabase.co/functions/v1/update-sheet-row`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          sheetName: "Jadwal Monitoring",
+          rowNumber,
+          updates: {
+            catatan_lapangan: noteDraft,
+          },
+        }),
+      });
+
+      if (!res.ok) {
+        const errorBody = await res.text();
+        throw new Error(errorBody || `HTTP ${res.status}`);
+      }
+
+      await refetch();
+      closeNoteEditor();
+    } catch (error: any) {
+      setSaveError(error?.message || "Gagal menyimpan catatan.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleUploadClick = (row: any) => {
+    setSelectedRow(row);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+      fileInputRef.current.click();
+    }
+  };
+
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files || !selectedRow) return;
+
+    alert(`Dipilih ${files.length} file untuk ${selectedRow.karyawan} pada ${selectedRow.tanggal}. Integrasi upload Google Drive dapat ditambahkan selanjutnya.`);
+    event.target.value = "";
   };
 
   return (
@@ -97,6 +186,7 @@ const JadwalMonitoring = () => {
                   <TableHead>Status</TableHead>
                   <TableHead>Catatan Lapangan</TableHead>
                   <TableHead>Link Dokumen/Bukti</TableHead>
+                  <TableHead>Aksi</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -136,6 +226,18 @@ const JadwalMonitoring = () => {
                         </a>
                       ) : "-"}
                     </TableCell>
+                    <TableCell>
+                      <div className="flex flex-col gap-2">
+                        <Button size="sm" variant="outline" onClick={() => openNoteEditor(item)}>
+                          <Edit3 className="mr-2 h-4 w-4" />
+                          Catatan
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={() => handleUploadClick(item)}>
+                          <UploadCloud className="mr-2 h-4 w-4" />
+                          Upload Foto
+                        </Button>
+                      </div>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -167,6 +269,45 @@ const JadwalMonitoring = () => {
           )}
         </>
       )}
+
+      <Dialog open={!!selectedRow} onOpenChange={(open) => { if (!open) closeNoteEditor(); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Catatan Lapangan</DialogTitle>
+            <DialogDescription>
+              Masukkan catatan untuk baris {selectedRow?.karyawan} tanggal {selectedRow?.tanggal}.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label>Catatan Lapangan</Label>
+              <Textarea
+                value={noteDraft}
+                onChange={(event) => setNoteDraft(event.target.value)}
+                placeholder="Masukkan catatan lapangan..."
+              />
+            </div>
+            {saveError && <p className="text-sm text-destructive">{saveError}</p>}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={closeNoteEditor}>
+              Batal
+            </Button>
+            <Button onClick={handleSaveNote} disabled={isSaving}>
+              {isSaving ? "Menyimpan..." : "Simpan Catatan"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        multiple
+        className="hidden"
+        onChange={handleFileChange}
+      />
     </div>
   );
 };

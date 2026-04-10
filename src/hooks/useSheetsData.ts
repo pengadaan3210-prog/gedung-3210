@@ -82,7 +82,13 @@ export function useNotulen() {
 
 export function useJadwalMonitoring() {
   const { data, ...rest } = useSheetsData(["Jadwal Monitoring"]);
-  return { data: data?.jadwalMonitoring || [], ...rest };
+  const rows = data?.["Jadwal Monitoring"] || [];
+  const normalized = rows.map((item: any) => ({
+    ...item,
+    link_dokumen_bukti:
+      item.link_dokumen_bukti ?? item["link_dokumen/bukti"] ?? item.link_dokumen ?? "",
+  }));
+  return { data: normalized, ...rest };
 }
 
 export function useFotoProgres() {

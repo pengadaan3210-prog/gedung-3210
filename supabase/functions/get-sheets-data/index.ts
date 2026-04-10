@@ -106,7 +106,8 @@ function normalizeHeader(header: string): string {
     .split('(')[0]
     .trim()
     .toLowerCase()
-    .replace(/\s+/g, '_');
+    .replace(/[\s\/\-]+/g, '_')
+    .replace(/[^a-z0-9_]+/g, '');
 }
 
 function sheetToObjects(rows: string[][]): Record<string, string>[] {
@@ -132,6 +133,7 @@ function sheetToObjects(rows: string[][]): Record<string, string>[] {
     headers.forEach((h, i) => {
       obj[h] = row[i] || '';
     });
+    obj.__rowNumber = (idx + 2).toString();
     // Use existing ID or generate from index
     if (!obj.id || obj.id.trim() === '') {
       obj.id = `row_${idx + 1}`;
