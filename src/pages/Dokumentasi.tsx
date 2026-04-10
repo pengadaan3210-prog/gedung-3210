@@ -18,7 +18,24 @@ const Dokumentasi = () => {
 
   const allTitles = [...new Set(data.map((d) => d.judulDokumen).filter(Boolean))];
 
-  const filteredTitles = allTitles.filter((title) => {
+  // Sort titles by latest upload date (newest first)
+  const sortedTitles = allTitles.sort((a, b) => {
+    const itemsA = data.filter((d) => d.judulDokumen === a);
+    const itemsB = data.filter((d) => d.judulDokumen === b);
+    const latestA = itemsA.reduce((latest, item) => {
+      if (!item.tanggalUpload) return latest;
+      const dateA = new Date(item.tanggalUpload).getTime();
+      return dateA > latest ? dateA : latest;
+    }, 0);
+    const latestB = itemsB.reduce((latest, item) => {
+      if (!item.tanggalUpload) return latest;
+      const dateB = new Date(item.tanggalUpload).getTime();
+      return dateB > latest ? dateB : latest;
+    }, 0);
+    return latestB - latestA; // Newest first
+  });
+
+  const filteredTitles = sortedTitles.filter((title) => {
     if (!search) return true;
     const s = search.toLowerCase();
     const titleMatch = title.toLowerCase().includes(s);
