@@ -80,6 +80,11 @@ export function useNotulen() {
   return { data: data?.notulen || [], ...rest };
 }
 
+export function useJadwalMonitoring() {
+  const { data, ...rest } = useSheetsData(["Jadwal Monitoring"]);
+  return { data: data?.jadwalMonitoring || [], ...rest };
+}
+
 export function useFotoProgres() {
   const { data, ...rest } = useSheetsData(["Foto_Progres"]);
   return { data: data?.fotoProgres || [], ...rest };

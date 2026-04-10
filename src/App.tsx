@@ -14,6 +14,7 @@ import FotoProgresPage from "@/pages/FotoProgresPage";
 import StakeholderPage from "@/pages/StakeholderPage";
 import MitigasiPage from "@/pages/MitigasiPage";
 import KurvaS from "@/pages/KurvaS";
+import JadwalMonitoring from "@/pages/JadwalMonitoring";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -85,6 +86,7 @@ const App = () => (
             <Route path="/mitigasi" element={<MitigasiPage />} />
             <Route path="/laporan" element={<Laporan />} />
             <Route path="/kurva-s" element={<KurvaS />} />
+            <Route path="/jadwal-monitoring" element={<JadwalMonitoring />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AppLayout>

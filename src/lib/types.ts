@@ -48,6 +48,16 @@ export interface Dokumentasi {
   tanggalUpload: string;
 }
 
+export interface JadwalMonitoring {
+  no: string;
+  hari_ke_x: string;
+  tanggal: string;
+  karyawan: string;
+  status: string;
+  catatan_lapangan: string;
+  link_dokumen_bukti: string;
+}
+
 export interface Notulen {
   id: string;
   tanggalRapat: string;

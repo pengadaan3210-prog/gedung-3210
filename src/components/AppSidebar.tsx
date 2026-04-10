@@ -11,8 +11,9 @@ import {
   Users,
   ShieldAlert,
   TrendingUp,
+  Building2,
+  Calendar,
 } from "lucide-react";
-import { NavLink } from "@/components/NavLink";
 import {
   Sidebar,
   SidebarContent,
@@ -26,7 +27,7 @@ import {
   SidebarFooter,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { Building2 } from "lucide-react";
+import { Calendar } from "lucide-react";
 
 
 const mainMenu = [
@@ -44,6 +45,7 @@ const todoMenu = [
 
 const progresMenu = [
   { title: "Kurva S", url: "/kurva-s", icon: TrendingUp },
+  { title: "Jadwal Monitoring", url: "/jadwal-monitoring", icon: Calendar },
 ];
 
 const mitigasiMenu = [
