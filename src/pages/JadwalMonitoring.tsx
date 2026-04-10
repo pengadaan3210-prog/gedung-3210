@@ -103,7 +103,7 @@ const JadwalMonitoring = () => {
   const getStatusBadge = (status: string) => {
     switch (status?.toLowerCase()) {
       case "hadir":
-        return <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200">Hadir</Badge>;
+        return <Badge variant="default">Hadir</Badge>;
       case "tidak hadir":
         return <Badge variant="destructive">Tidak Hadir</Badge>;
       default:
