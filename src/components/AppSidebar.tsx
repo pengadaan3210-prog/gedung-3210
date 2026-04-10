@@ -27,7 +27,7 @@ import {
   SidebarFooter,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { Calendar } from "lucide-react";
+import { NavLink } from "@/components/NavLink";
 
 
 const mainMenu = [
