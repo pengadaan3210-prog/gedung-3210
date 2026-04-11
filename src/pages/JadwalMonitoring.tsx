@@ -3,7 +3,7 @@ import LoadingState from "@/components/LoadingState";
 import ErrorState from "@/components/ErrorState";
 import { GoogleSignInModal } from "@/components/GoogleSignInModal";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, FileEdit, Upload, Eye, ExternalLink, Loader2, ImageIcon, ArrowUp, ArrowDown, FileText } from "lucide-react";
+import { Calendar, FileEdit, Upload, ExternalLink, Loader2, ImageIcon, ArrowUp, ArrowDown, FileText } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -183,6 +183,7 @@ const JadwalMonitoring = () => {
   const [detailRow, setDetailRow] = useState<any>(null);
   const [detailFiles, setDetailFiles] = useState<DriveFile[]>([]);
   const [isLoadingDetailFiles, setIsLoadingDetailFiles] = useState(false);
+  const [failedThumbnails, setFailedThumbnails] = useState<Set<string>>(new Set());
 
   const normalizedData = useMemo(() => (data || []).map((row) => ({
     ...normalizeScheduleRow(row),
@@ -559,6 +560,7 @@ const JadwalMonitoring = () => {
   const handleOpenDetailModal = async (row: any) => {
     setDetailRow(row);
     setDetailFiles([]);
+    setFailedThumbnails(new Set());
     
     const link = row.link_dokumen_bukti;
     if (!link) return;
@@ -592,6 +594,10 @@ const JadwalMonitoring = () => {
     } finally {
       setIsLoadingDetailFiles(false);
     }
+  };
+
+  const handleThumbnailError = (fileId: string) => {
+    setFailedThumbnails((prev) => new Set(prev).add(fileId));
   };
 
   const formatTanggal = (tanggal: string) => {
@@ -849,23 +855,6 @@ const JadwalMonitoring = () => {
                               </TooltipTrigger>
                               <TooltipContent>Upload Foto</TooltipContent>
                             </Tooltip>
-
-                            {/* Lihat Foto - only show if link exists */}
-                            {hasLink && (
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button
-                                    size="icon"
-                                    variant="ghost"
-                                    className="h-8 w-8 text-muted-foreground hover:text-primary"
-                                    onClick={() => handleViewClick(item)}
-                                  >
-                                    <Eye className="h-4 w-4" />
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>Lihat Foto</TooltipContent>
-                              </Tooltip>
-                            )}
                           </div>
                         </TableCell>
                       </TableRow>
@@ -1031,46 +1020,13 @@ const JadwalMonitoring = () => {
         <Dialog open={!!detailRow} onOpenChange={(open) => { if (!open) { setDetailRow(null); setDetailFiles([]); } }}>
           <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle className="text-lg font-bold">Detail Jadwal Monitoring</DialogTitle>
-              <DialogDescription>
-                {detailRow?.karyawan} • {detailRow?.tanggal ? formatTanggal(detailRow.tanggal) : "-"}
+              <DialogTitle className="text-2xl font-bold leading-tight">{detailRow?.karyawan}</DialogTitle>
+              <DialogDescription className="text-sm mt-1 text-muted-foreground font-medium">
+                {detailRow?.tanggal ? formatTanggal(detailRow.tanggal) : "-"}
               </DialogDescription>
             </DialogHeader>
 
             <div className="space-y-6 py-4">
-              {/* Row Details */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <div className="text-xs text-muted-foreground font-medium mb-1">No</div>
-                  <div className="text-sm font-medium">{detailRow?.no || "-"}</div>
-                </div>
-                <div>
-                  <div className="text-xs text-muted-foreground font-medium mb-1">Hari ke-</div>
-                  <div className="text-sm">{detailRow?.hari_ke_x || "-"}</div>
-                </div>
-                <div>
-                  <div className="text-xs text-muted-foreground font-medium mb-1">Tanggal</div>
-                  <div className="text-sm flex items-center gap-2">
-                    <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
-                    {detailRow?.tanggal ? formatTanggal(detailRow.tanggal) : "-"}
-                  </div>
-                </div>
-                <div>
-                  <div className="text-xs text-muted-foreground font-medium mb-1">Minggu ke-</div>
-                  <div className="text-sm">{detailRow?.mingguKe || "-"}</div>
-                </div>
-                <div>
-                  <div className="text-xs text-muted-foreground font-medium mb-1">Karyawan</div>
-                  <div className="text-sm font-medium">{detailRow?.karyawan || "-"}</div>
-                </div>
-                <div>
-                  <div className="text-xs text-muted-foreground font-medium mb-1">Status</div>
-                  <div>{getStatusBadge(detailRow?.computedStatus)}</div>
-                </div>
-              </div>
-
-              <Separator />
-
               {/* Tahapan / Pekerjaan */}
               <div>
                 <div className="text-xs text-muted-foreground font-medium mb-2">Tahapan / Pekerjaan</div>
@@ -1088,8 +1044,6 @@ const JadwalMonitoring = () => {
                   {detailRow?.catatan_lapangan || <span className="text-muted-foreground italic">Belum ada catatan</span>}
                 </div>
               </div>
-
-              <Separator />
 
               {/* Foto & Dokumen */}
               <div>
@@ -1125,6 +1079,8 @@ const JadwalMonitoring = () => {
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                       {detailFiles.map((file) => {
                         const isImage = file.mimeType?.startsWith("image/");
+                        const hasThumbnailFailed = failedThumbnails.has(file.id);
+                        
                         return (
                           <a
                             key={file.id}
@@ -1135,17 +1091,26 @@ const JadwalMonitoring = () => {
                             title={file.name}
                           >
                             <div className="aspect-square bg-muted/30 flex items-center justify-center overflow-hidden">
-                              {isImage ? (
+                              {isImage && !hasThumbnailFailed ? (
                                 <img
                                   src={file.thumbnailUrl}
                                   alt={file.name}
                                   className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                                  loading="lazy"
+                                  onError={() => handleThumbnailError(file.id)}
                                 />
                               ) : (
-                                <div className="flex flex-col items-center gap-1 text-muted-foreground">
-                                  <FileText className="h-6 w-6" />
-                                  <span className="text-xs text-center px-1 break-words">{file.mimeType?.split("/")[1] || "file"}</span>
+                                <div className="flex flex-col items-center gap-1.5 text-muted-foreground">
+                                  {isImage ? (
+                                    <>
+                                      <ImageIcon className="h-8 w-8" />
+                                      <span className="text-xs text-center">Gambar</span>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <FileText className="h-6 w-6" />
+                                      <span className="text-xs text-center px-1 break-words">{file.mimeType?.split("/")[1] || "file"}</span>
+                                    </>
+                                  )}
                                 </div>
                               )}
                             </div>

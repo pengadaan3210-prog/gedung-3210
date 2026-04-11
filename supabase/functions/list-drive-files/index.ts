@@ -127,15 +127,27 @@ serve(async (req) => {
     }
 
     const data = await res.json();
-    const files = (data.files || []).map((f: any) => ({
-      id: f.id,
-      name: f.name,
-      mimeType: f.mimeType,
-      thumbnailUrl: f.thumbnailLink || `https://drive.google.com/thumbnail?id=${f.id}&sz=w400`,
-      viewUrl: f.webViewLink || `https://drive.google.com/file/d/${f.id}/view`,
-      downloadUrl: f.webContentLink || '',
-      createdTime: f.createdTime,
-    }));
+    const files = (data.files || []).map((f: any) => {
+      // Always use the reliable webContentLink for viewing full size
+      // For thumbnails, use custom thumbnail URL if available, otherwise generate a reliable one
+      let thumbnailUrl = f.thumbnailLink;
+      
+      // If no thumbnail link from API, generate a reliable thumbnail URL
+      if (!thumbnailUrl) {
+        // Use direct preview URL which works for most files
+        thumbnailUrl = `https://drive.google.com/thumbnail?id=${f.id}`;
+      }
+      
+      return {
+        id: f.id,
+        name: f.name,
+        mimeType: f.mimeType,
+        thumbnailUrl: thumbnailUrl,
+        viewUrl: f.webViewLink || `https://drive.google.com/file/d/${f.id}/view`,
+        downloadUrl: f.webContentLink || '',
+        createdTime: f.createdTime,
+      };
+    });
 
     return new Response(JSON.stringify({ files, folderId }), {
       status: 200,
