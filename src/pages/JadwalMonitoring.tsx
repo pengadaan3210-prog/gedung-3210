@@ -31,6 +31,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { toast } from "sonner";
+import { getValidGoogleToken, getStoredGoogleToken } from "@/integrations/google/oauth";
 
 const PROJECT_ID = import.meta.env.VITE_SUPABASE_PROJECT_ID;
 const ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
@@ -181,6 +182,13 @@ const JadwalMonitoring = () => {
       formData.append("karyawan", uploadRow.karyawan);
       formData.append("rowNumber", rowNumber.toString());
 
+      // Try to get user Google token
+      const storedToken = getStoredGoogleToken();
+      if (storedToken) {
+        console.log("📱 Using stored Google OAuth token");
+        formData.append("userToken", storedToken.access_token);
+      }
+
       for (let i = 0; i < files.length; i++) {
         formData.append("files", files[i]);
       }
@@ -196,13 +204,22 @@ const JadwalMonitoring = () => {
 
       if (!res.ok) {
         let errorMessage = "Gagal mengupload file";
+        let errorCode = "";
         try {
           const errorData = await res.json();
           errorMessage = errorData?.error || errorMessage;
+          errorCode = errorData?.code || "";
         } catch {
           errorMessage = await res.text();
         }
-        throw new Error(errorMessage);
+
+        // If error suggests to login with Google, show that message
+        if (errorCode === "PLEASE_LOGIN_WITH_GOOGLE") {
+          toast.error("Silakan login dengan Google terlebih dahulu untuk upload file");
+        } else {
+          throw new Error(errorMessage);
+        }
+        return;
       }
 
       const result = await res.json();

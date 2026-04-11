@@ -252,32 +252,8 @@ serve(async (req) => {
   }
 
   try {
-    const saJson = Deno.env.get('GOOGLE_SERVICE_ACCOUNT_JSON');
-    if (!saJson) throw new Error('GOOGLE_SERVICE_ACCOUNT_JSON not configured');
-
-    let serviceAccount: any;
-    try {
-      serviceAccount = JSON.parse(saJson);
-    } catch {
-      const cleaned = saJson.trim().replace(/^"|"$/g, '');
-      serviceAccount = JSON.parse(cleaned);
-    }
-
-    const accessToken = await getAccessToken(serviceAccount);
-    const parentFolder = await getFolderMetadata(accessToken, PARENT_FOLDER_ID);
-
-    if (!parentFolder.driveId) {
-      return new Response(JSON.stringify({
-        error: 'Folder utama Google Drive masih berada di My Drive. Service account tidak bisa mengupload file ke My Drive karena tidak memiliki storage quota. Pindahkan folder utama ke Shared Drive, lalu coba upload lagi.',
-        code: 'PARENT_FOLDER_NOT_SHARED_DRIVE',
-        folderId: PARENT_FOLDER_ID,
-      }), {
-        status: 409,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
     const formData = await req.formData();
+    const userToken = formData.get('userToken') as string;
     const tanggal = formData.get('tanggal') as string;
     const karyawan = formData.get('karyawan') as string;
     const rowNumber = formData.get('rowNumber') as string;
@@ -287,6 +263,41 @@ serve(async (req) => {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
+    }
+
+    let accessToken: string;
+
+    // Try to use user token first (OAuth)
+    if (userToken) {
+      console.log('📱 Using user OAuth token');
+      accessToken = userToken;
+    } else {
+      // Fallback to service account
+      console.log('🔑 Using service account token');
+      const saJson = Deno.env.get('GOOGLE_SERVICE_ACCOUNT_JSON');
+      if (!saJson) throw new Error('GOOGLE_SERVICE_ACCOUNT_JSON not configured and no userToken provided');
+
+      let serviceAccount: any;
+      try {
+        serviceAccount = JSON.parse(saJson);
+      } catch {
+        const cleaned = saJson.trim().replace(/^"|"$/g, '');
+        serviceAccount = JSON.parse(cleaned);
+      }
+
+      accessToken = await getAccessToken(serviceAccount);
+      
+      // Verify folder is on shared drive
+      const parentFolder = await getFolderMetadata(accessToken, PARENT_FOLDER_ID);
+      if (!parentFolder.driveId) {
+        return new Response(JSON.stringify({
+          error: 'Folder utama masih di My Drive. Silakan login dengan Google terlebih dahulu untuk upload, atau pindahkan folder ke Shared Drive.',
+          code: 'PLEASE_LOGIN_WITH_GOOGLE',
+        }), {
+          status: 403,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
     }
 
     // Format folder name
