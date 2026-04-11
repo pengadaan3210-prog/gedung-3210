@@ -61,7 +61,13 @@ const JadwalMonitoring = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 10;
 
-  // Helper function untuk match tanggal dengan range
+  // Helper function untuk parse ISO date string dan normalize ke midnight
+  const parseISODate = (isoStr: string): Date => {
+    const [year, month, day] = isoStr.split('-');
+    return new Date(parseInt(year), parseInt(month) - 1, parseInt(day), 0, 0, 0, 0);
+  };
+
+  // Helper function untuk match tanggal dengan range dan return tahapan
   const getTahapanForDate = (tanggal: string): string => {
     if (!tanggal || !kurvaSPlanning.length) return "-";
     
@@ -69,25 +75,72 @@ const JadwalMonitoring = () => {
     const parts = tanggal?.split(/[\/\-]/);
     if (parts.length !== 3) return "-";
     
-    const targetDate = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
+    const targetDate = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]), 0, 0, 0, 0);
     if (isNaN(targetDate.getTime())) return "-";
     
     // Find matching tahapan
     const matching = kurvaSPlanning.find(tahapan => {
-      let startDate: Date;
-      let endDate: Date;
-      
-      // tanggalAwal & tanggalAkhir dari backend adalah ISO format: "YYYY-MM-DD"
-      startDate = new Date(tahapan.tanggalAwal);
-      endDate = new Date(tahapan.tanggalAkhir);
-      
-      // Tambah 1 hari ke endDate agar inclusive
-      endDate.setDate(endDate.getDate() + 1);
-      
-      return targetDate >= startDate && targetDate < endDate;
+      const startDate = parseISODate(tahapan.tanggalAwal);
+      const endDate = parseISODate(tahapan.tanggalAkhir);
+      return targetDate >= startDate && targetDate <= endDate;
     });
     
     return matching?.deskripsiTahapan || "-";
+  };
+
+  // Helper function untuk match tanggal dengan range dan return minggu ke
+  const getMingguKeForDate = (tanggal: string): number => {
+    if (!tanggal || !kurvaSPlanning.length) return 0;
+    
+    // Parse tanggal dari format "DD/MM/YYYY"
+    const parts = tanggal?.split(/[\/\-]/);
+    if (parts.length !== 3) return 0;
+    
+    const targetDate = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]), 0, 0, 0, 0);
+    if (isNaN(targetDate.getTime())) return 0;
+    
+    // Find matching minggu ke
+    const matching = kurvaSPlanning.find(tahapan => {
+      const startDate = parseISODate(tahapan.tanggalAwal);
+      const endDate = parseISODate(tahapan.tanggalAkhir);
+      return targetDate >= startDate && targetDate <= endDate;
+    });
+    
+    return matching?.mingguke || 0;
+  };
+
+  // Helper function untuk determine status
+  const getStatusValue = (row: any): string => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const rowDate = row.tanggal ? parseDMY(row.tanggal) : null;
+    if (!rowDate) return "-";
+    
+    rowDate.setHours(0, 0, 0, 0);
+    
+    const hasCatatan = !!row.catatan_lapangan?.trim();
+    const hasFoto = !!row.link_dokumen_bukti?.trim();
+    
+    // Jika tanggal masih di masa depan → "-"
+    if (rowDate > today) {
+      return "-";
+    }
+    
+    // Jika tanggal sudah terlewat atau hari ini
+    if (rowDate <= today) {
+      // Hadir jika ada catatan dan foto
+      if (hasCatatan && hasFoto) {
+        return "Hadir";
+      }
+      // Tidak Hadir jika tidak ada catatan dan tidak ada foto
+      if (!hasCatatan && !hasFoto) {
+        return "Tidak Hadir";
+      }
+    }
+    
+    // Default untuk status intermediate
+    return "-";
   };
 
   // Note editor state
@@ -111,6 +164,8 @@ const JadwalMonitoring = () => {
   const normalizedData = useMemo(() => (data || []).map((row) => ({
     ...normalizeScheduleRow(row),
     tahapan: getTahapanForDate(row.tanggal),
+    mingguKe: getMingguKeForDate(row.tanggal),
+    computedStatus: getStatusValue(row),
   })), [data, kurvaSPlanning]);
 
   if (isLoading) return <div className="p-6"><LoadingState /></div>;
@@ -183,8 +238,10 @@ const JadwalMonitoring = () => {
         return <Badge variant="default">Hadir</Badge>;
       case "tidak hadir":
         return <Badge variant="destructive">Tidak Hadir</Badge>;
+      case "-":
+        return <Badge variant="outline">-</Badge>;
       default:
-        return <Badge variant="secondary">{status || "-"}</Badge>;
+        return <Badge variant="outline">{status || "-"}</Badge>;
     }
   };
 
@@ -435,11 +492,12 @@ const JadwalMonitoring = () => {
                   <TableRow className="bg-muted/30">
                     <TableHead className="w-14 text-center">No</TableHead>
                     <TableHead className="w-24">Hari ke-X</TableHead>
+                    <TableHead className="w-20">Minggu ke-x</TableHead>
                     <TableHead>Tanggal</TableHead>
                     <TableHead>Karyawan</TableHead>
-                    <TableHead className="w-28">Status</TableHead>
-                    <TableHead>Catatan Lapangan</TableHead>
                     <TableHead>Tahapan / Pekerjaan</TableHead>
+                    <TableHead>Catatan Lapangan</TableHead>
+                    <TableHead className="w-28">Status</TableHead>
                     <TableHead className="w-28 text-center">Aksi</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -452,6 +510,9 @@ const JadwalMonitoring = () => {
                           {item.no || startIndex + index + 1}
                         </TableCell>
                         <TableCell className="font-medium">{item.hari_ke_x || "-"}</TableCell>
+                        <TableCell className="text-center font-medium">
+                          {item.mingguKe || "-"}
+                        </TableCell>
                         <TableCell>
                           {item.tanggal ? (
                             <div className="flex items-center gap-2 text-sm">
@@ -461,12 +522,6 @@ const JadwalMonitoring = () => {
                           ) : "-"}
                         </TableCell>
                         <TableCell className="font-medium">{item.karyawan || "-"}</TableCell>
-                        <TableCell>{getStatusBadge(item.status)}</TableCell>
-                        <TableCell className="max-w-[200px]">
-                          <div className="truncate text-sm" title={item.catatan_lapangan}>
-                            {item.catatan_lapangan || <span className="text-muted-foreground italic">Belum ada catatan</span>}
-                          </div>
-                        </TableCell>
                         <TableCell className="max-w-[250px]">
                           <div className="truncate text-sm" title={item.tahapan}>
                             {item.tahapan && item.tahapan !== "-" ? (
@@ -476,6 +531,12 @@ const JadwalMonitoring = () => {
                             )}
                           </div>
                         </TableCell>
+                        <TableCell className="max-w-[200px]">
+                          <div className="truncate text-sm" title={item.catatan_lapangan}>
+                            {item.catatan_lapangan || <span className="text-muted-foreground italic">Belum ada catatan</span>}
+                          </div>
+                        </TableCell>
+                        <TableCell>{getStatusBadge(item.computedStatus)}</TableCell>
                         <TableCell>
                           <div className="flex items-center justify-center gap-1">
                             {/* Edit Catatan */}
