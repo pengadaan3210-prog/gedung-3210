@@ -115,7 +115,7 @@ serve(async (req) => {
 
     // List files in the folder
     const query = `'${folderId}' in parents and trashed=false`;
-    const listUrl = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(query)}&fields=files(id,name,mimeType,thumbnailLink,webViewLink,webContentLink,createdTime)&orderBy=createdTime desc`;
+    const listUrl = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(query)}&fields=files(id,name,mimeType,thumbnailLink,webViewLink,webContentLink,createdTime)&orderBy=createdTime desc&supportsAllDrives=true&includeItemsFromAllDrives=true`;
 
     const res = await fetch(listUrl, {
       headers: { Authorization: `Bearer ${accessToken}` },

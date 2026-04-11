@@ -195,8 +195,14 @@ const JadwalMonitoring = () => {
       });
 
       if (!res.ok) {
-        const errorText = await res.text();
-        throw new Error(errorText);
+        let errorMessage = "Gagal mengupload file";
+        try {
+          const errorData = await res.json();
+          errorMessage = errorData?.error || errorMessage;
+        } catch {
+          errorMessage = await res.text();
+        }
+        throw new Error(errorMessage);
       }
 
       const result = await res.json();

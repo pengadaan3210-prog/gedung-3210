@@ -149,6 +149,22 @@ async function countExistingFiles(accessToken: string, folderId: string, prefix:
   return data.files?.length || 0;
 }
 
+async function getFolderMetadata(accessToken: string, folderId: string): Promise<{ id: string; name: string; driveId?: string }> {
+  const res = await fetch(
+    `https://www.googleapis.com/drive/v3/files/${folderId}?fields=id,name,driveId&supportsAllDrives=true`,
+    {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    }
+  );
+
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`Failed to inspect parent folder: ${err}`);
+  }
+
+  return await res.json();
+}
+
 // Upload a single file to Google Drive
 async function uploadFileToDrive(
   accessToken: string,
@@ -248,6 +264,18 @@ serve(async (req) => {
     }
 
     const accessToken = await getAccessToken(serviceAccount);
+    const parentFolder = await getFolderMetadata(accessToken, PARENT_FOLDER_ID);
+
+    if (!parentFolder.driveId) {
+      return new Response(JSON.stringify({
+        error: 'Folder utama Google Drive masih berada di My Drive. Service account tidak bisa mengupload file ke My Drive karena tidak memiliki storage quota. Pindahkan folder utama ke Shared Drive, lalu coba upload lagi.',
+        code: 'PARENT_FOLDER_NOT_SHARED_DRIVE',
+        folderId: PARENT_FOLDER_ID,
+      }), {
+        status: 409,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
     const formData = await req.formData();
     const tanggal = formData.get('tanggal') as string;
@@ -326,9 +354,11 @@ serve(async (req) => {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error: any) {
+    const message = error?.message || 'Unknown error';
     console.error('❌ Upload error:', error);
-    return new Response(JSON.stringify({ error: error?.message || 'Unknown error' }), {
-      status: 500,
+    const status = message.includes('storage quota') || message.includes('storageQuotaExceeded') ? 409 : 500;
+    return new Response(JSON.stringify({ error: message }), {
+      status,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
