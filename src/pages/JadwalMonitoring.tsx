@@ -1,4 +1,4 @@
-import { useJadwalMonitoring } from "@/hooks/useSheetsData";
+import { useJadwalMonitoring, useSheetsData } from "@/hooks/useSheetsData";
 import LoadingState from "@/components/LoadingState";
 import ErrorState from "@/components/ErrorState";
 import { GoogleSignInModal } from "@/components/GoogleSignInModal";
@@ -55,9 +55,32 @@ interface DriveFile {
 
 const JadwalMonitoring = () => {
   const { data, isLoading, isError, refetch } = useJadwalMonitoring();
+  const sheetsData = useSheetsData(["Kurva_S_Planning"]);
+  const kurvaSPlanning = sheetsData.data?.kurvaSPlanning || [];
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 10;
+
+  // Helper function untuk match tanggal dengan range
+  const getTahapanForDate = (tanggal: string): string => {
+    if (!tanggal || !kurvaSPlanning.length) return "-";
+    
+    // Parse tanggal dari format "DD/MM/YYYY"
+    const parts = tanggal?.split(/[\/\-]/);
+    if (parts.length !== 3) return "-";
+    
+    const targetDate = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
+    if (isNaN(targetDate.getTime())) return "-";
+    
+    // Find matching tahapan
+    const matching = kurvaSPlanning.find(tahapan => {
+      const startDate = new Date(tahapan.tanggalAwal);
+      const endDate = new Date(tahapan.tanggalAkhir);
+      return targetDate >= startDate && targetDate <= endDate;
+    });
+    
+    return matching?.deskripsiTahapan || "-";
+  };
 
   // Note editor state
   const [noteRow, setNoteRow] = useState<any>(null);
@@ -77,7 +100,10 @@ const JadwalMonitoring = () => {
   const [viewFiles, setViewFiles] = useState<DriveFile[]>([]);
   const [isLoadingFiles, setIsLoadingFiles] = useState(false);
 
-  const normalizedData = useMemo(() => (data || []).map(normalizeScheduleRow), [data]);
+  const normalizedData = useMemo(() => (data || []).map((row) => ({
+    ...normalizeScheduleRow(row),
+    tahapan: getTahapanForDate(row.tanggal),
+  })), [data, kurvaSPlanning]);
 
   if (isLoading) return <div className="p-6"><LoadingState /></div>;
   if (isError) return <div className="p-6"><ErrorState onRetry={() => refetch()} /></div>;
@@ -405,7 +431,7 @@ const JadwalMonitoring = () => {
                     <TableHead>Karyawan</TableHead>
                     <TableHead className="w-28">Status</TableHead>
                     <TableHead>Catatan Lapangan</TableHead>
-                    <TableHead className="w-36">Link Dokumen</TableHead>
+                    <TableHead>Tahapan / Pekerjaan</TableHead>
                     <TableHead className="w-28 text-center">Aksi</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -433,20 +459,14 @@ const JadwalMonitoring = () => {
                             {item.catatan_lapangan || <span className="text-muted-foreground italic">Belum ada catatan</span>}
                           </div>
                         </TableCell>
-                        <TableCell>
-                          {hasLink ? (
-                            <a
-                              href={item.link_dokumen_bukti}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
-                            >
-                              <ExternalLink className="h-3.5 w-3.5" />
-                              Buka Folder
-                            </a>
-                          ) : (
-                            <span className="text-xs text-muted-foreground italic">Belum ada</span>
-                          )}
+                        <TableCell className="max-w-[250px]">
+                          <div className="truncate text-sm" title={item.tahapan}>
+                            {item.tahapan && item.tahapan !== "-" ? (
+                              <Badge variant="outline" className="text-xs">{item.tahapan}</Badge>
+                            ) : (
+                              <span className="text-muted-foreground italic text-xs">-</span>
+                            )}
+                          </div>
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center justify-center gap-1">
