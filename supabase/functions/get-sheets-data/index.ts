@@ -264,15 +264,19 @@ function mapStakeholder(raw: Record<string, string>[]) {
 }
 
 function mapMitigasi(raw: Record<string, string>[]) {
+  console.log(`   🔍 Mapping ${raw.length} mitigasi records...`);
+  if (raw.length > 0) {
+    console.log(`   🔍 First row keys: [${Object.keys(raw[0]).join(', ')}]`);
+  }
   return raw.map((r) => ({
     id: r.id || '',
     sumberRisiko: r.sumber_risiko || '',
-    uraianRisiko: r['uraian_risiko_/_permasalahan'] || r.uraian_risiko || '',
+    uraianRisiko: r.uraian_risiko_permasalahan || r['uraian_risiko_/_permasalahan'] || r.uraian_risiko || '',
     kategoriRisiko: r.kategori_risiko || '',
     dampakRisiko: r.dampak_risiko || '',
     tingkatRisiko: r.tingkat_risiko || '',
     penyebab: r.penyebab || '',
-    mitigasiSolusi: r['mitigasi_/_solusi_yang_direncanakan'] || r.mitigasi || '',
+    mitigasiSolusi: r.mitigasi_solusi_yang_direncanakan || r['mitigasi_/_solusi_yang_direncanakan'] || r.mitigasi || '',
     tindakLanjut: r.tindak_lanjut || '',
     pic: r.penanggung_jawab || r.pic || '',
     targetWaktu: r.target_waktu_penyelesaian || r.target_waktu || '',
