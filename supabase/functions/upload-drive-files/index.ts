@@ -239,6 +239,15 @@ async function updateSheetCell(accessToken: string, sheetName: string, cell: str
   }
 }
 
+function parseServiceAccount(saJson: string) {
+  try {
+    return JSON.parse(saJson);
+  } catch {
+    const cleaned = saJson.trim().replace(/^"|"$/g, '');
+    return JSON.parse(cleaned);
+  }
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -273,30 +282,27 @@ serve(async (req) => {
       });
     }
 
-    let accessToken: string;
+    const saJson = Deno.env.get('GOOGLE_SERVICE_ACCOUNT_JSON');
+    if (!saJson) {
+      throw new Error('GOOGLE_SERVICE_ACCOUNT_JSON not configured');
+    }
+
+    const serviceAccount = parseServiceAccount(saJson);
+    const sheetAccessToken = await getAccessToken(serviceAccount);
+
+    let driveAccessToken: string;
 
     // Try to use user token first (OAuth)
     if (userToken && userToken.trim()) {
       console.log('📱 Using user OAuth token');
-      accessToken = userToken;
+      driveAccessToken = userToken;
     } else {
       // Fallback to service account
       console.log('🔑 Using service account token (no user token provided)');
-      const saJson = Deno.env.get('GOOGLE_SERVICE_ACCOUNT_JSON');
-      if (!saJson) throw new Error('GOOGLE_SERVICE_ACCOUNT_JSON not configured and no userToken provided');
-
-      let serviceAccount: any;
-      try {
-        serviceAccount = JSON.parse(saJson);
-      } catch {
-        const cleaned = saJson.trim().replace(/^"|"$/g, '');
-        serviceAccount = JSON.parse(cleaned);
-      }
-
-      accessToken = await getAccessToken(serviceAccount);
+      driveAccessToken = sheetAccessToken;
       
       // Verify folder is on shared drive
-      const parentFolder = await getFolderMetadata(accessToken, PARENT_FOLDER_ID);
+      const parentFolder = await getFolderMetadata(driveAccessToken, PARENT_FOLDER_ID);
       if (!parentFolder.driveId) {
         return new Response(JSON.stringify({
           error: 'Folder utama masih di My Drive. Silakan login dengan Google terlebih dahulu untuk upload, atau pindahkan folder ke Shared Drive.',
@@ -313,7 +319,7 @@ serve(async (req) => {
     console.log(`📅 Folder name: ${folderName}`);
 
     // Find or create date folder
-    const folderId = await findOrCreateFolder(accessToken, folderName, PARENT_FOLDER_ID);
+    const folderId = await findOrCreateFolder(driveAccessToken, folderName, PARENT_FOLDER_ID);
     const folderLink = `https://drive.google.com/drive/folders/${folderId}`;
 
     // Get all uploaded files
@@ -335,7 +341,7 @@ serve(async (req) => {
 
     // Count existing files with this prefix
     const filePrefix = `${folderName} - ${karyawan}`;
-    const existingCount = await countExistingFiles(accessToken, folderId, filePrefix);
+    const existingCount = await countExistingFiles(driveAccessToken, folderId, filePrefix);
 
     const uploadedFiles: any[] = [];
 
@@ -354,13 +360,13 @@ serve(async (req) => {
         : `${filePrefix} (${fileIndex})${ext}`;
 
       console.log(`   📎 Uploading: ${fileName} (${fileData.length} bytes)`);
-      const result = await uploadFileToDrive(accessToken, folderId, fileName, fileData, file.type || 'image/jpeg');
+      const result = await uploadFileToDrive(driveAccessToken, folderId, fileName, fileData, file.type || 'image/jpeg');
       uploadedFiles.push(result);
     }
 
     // Update sheet column G with folder link
     const cell = `G${rowNumber}`;
-    await updateSheetCell(accessToken, 'Jadwal Monitoring', cell, folderLink);
+    await updateSheetCell(sheetAccessToken, 'Jadwal Monitoring', cell, folderLink);
     console.log(`✅ Updated sheet cell ${cell} with folder link`);
 
     return new Response(JSON.stringify({
