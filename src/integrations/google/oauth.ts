@@ -1,5 +1,4 @@
 const GOOGLE_CLIENT_ID = '521333077807-v2mk1dc8dqn9k4t177qq7gn300n82vk7.apps.googleusercontent.com';
-const GOOGLE_CLIENT_SECRET = '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';
 const GOOGLE_SCOPES = [
   'https://www.googleapis.com/auth/drive',
   'https://www.googleapis.com/auth/drive.file',
@@ -95,7 +94,7 @@ export async function requestGoogleAccessToken(): Promise<GoogleAuthToken> {
 }
 
 /**
- * Refresh access token using refresh token
+ * Refresh access token using refresh token (via backend)
  */
 export async function refreshAccessToken(refreshToken: string): Promise<GoogleAuthToken> {
   if (!refreshToken) {
@@ -103,20 +102,26 @@ export async function refreshAccessToken(refreshToken: string): Promise<GoogleAu
   }
 
   try {
-    const response = await fetch('https://oauth2.googleapis.com/token', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({
-        client_id: GOOGLE_CLIENT_ID,
-        client_secret: GOOGLE_CLIENT_SECRET,
-        refresh_token: refreshToken,
-        grant_type: 'refresh_token',
-      }).toString(),
-    });
+    // Call backend Edge Function to refresh token safely
+    const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+    const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+    
+    const response = await fetch(
+      `https://${projectId}.supabase.co/functions/v1/refresh-google-token`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${anonKey}`,
+          'apikey': anonKey,
+        },
+        body: JSON.stringify({ refresh_token: refreshToken }),
+      }
+    );
 
     if (!response.ok) {
       const error = await response.json();
-      throw new Error(`Token refresh failed: ${error.error_description || error.error}`);
+      throw new Error(`Token refresh failed: ${error.error_description || error.error || 'Unknown error'}`);
     }
 
     const data = await response.json();
