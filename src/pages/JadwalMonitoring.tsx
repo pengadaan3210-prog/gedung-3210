@@ -1,6 +1,7 @@
 import { useJadwalMonitoring } from "@/hooks/useSheetsData";
 import LoadingState from "@/components/LoadingState";
 import ErrorState from "@/components/ErrorState";
+import { GoogleSignInModal } from "@/components/GoogleSignInModal";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, FileEdit, Upload, Eye, ExternalLink, X, Loader2, ImageIcon } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -31,7 +32,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { toast } from "sonner";
-import { getValidGoogleToken, getStoredGoogleToken } from "@/integrations/google/oauth";
+import { getValidGoogleToken, getStoredGoogleToken, isTokenExpired } from "@/integrations/google/oauth";
 
 const PROJECT_ID = import.meta.env.VITE_SUPABASE_PROJECT_ID;
 const ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
@@ -67,6 +68,8 @@ const JadwalMonitoring = () => {
   const [uploadRow, setUploadRow] = useState<any>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState("");
+  const [pendingFiles, setPendingFiles] = useState<FileList | null>(null);
+  const [showGoogleSignIn, setShowGoogleSignIn] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // View files state
@@ -163,8 +166,7 @@ const JadwalMonitoring = () => {
     }
   };
 
-  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files;
+  const performUpload = async (files: FileList | null) => {
     if (!files || files.length === 0 || !uploadRow) return;
 
     const rowNumber = uploadRow.__rowNumber || uploadRow.rowNumber;
@@ -174,57 +176,28 @@ const JadwalMonitoring = () => {
     }
 
     setIsUploading(true);
-    setUploadProgress(`Mengupload ${files.length} file...`);
+    setUploadProgress(`Mengirim ${files.length} file...`);
 
     try {
-      // Try to get stored token first
       let userToken = getStoredGoogleToken()?.access_token;
 
-      // If no token or token expired, request new token
       if (!userToken) {
-        console.log("📱 No valid token, requesting Google auth...");
-        setUploadProgress(`Mohon login dengan Google...`);
-        
-        try {
-          const token = await getValidGoogleToken();
-          userToken = token.access_token;
-          console.log("✅ Got Google token");
-          setUploadProgress(`Mengupload ${files.length} file...`);
-        } catch (authErr: any) {
-          console.error("❌ Google auth failed:", authErr);
-          const errMsg = authErr?.message || "Gagal login dengan Google";
-          
-          // Check for specific error types
-          if (errMsg.includes("blocked") || errMsg.includes("ERR_BLOCKED")) {
-            toast.error("Google auth diblokir atau popup tertutup. Silakan coba lagi dan izinkan popup.");
-          } else if (errMsg.includes("timeout")) {
-            toast.error("Google auth timeout. Silakan coba lagi.");
-          } else {
-            toast.error(errMsg);
-          }
-          
-          setIsUploading(false);
-          setUploadProgress("");
-          event.target.value = "";
-          return;
-        }
+        console.log("❌ No token available");
+        toast.error("Token tidak tersedia. Silakan login lagi.");
+        return;
       }
 
       const formData = new FormData();
       formData.append("tanggal", uploadRow.tanggal);
       formData.append("karyawan", uploadRow.karyawan);
       formData.append("rowNumber", rowNumber.toString());
-      
-      if (userToken) {
-        formData.append("userToken", userToken);
-        console.log("📤 Sending file with Google token");
-      }
+      formData.append("userToken", userToken);
 
       for (let i = 0; i < files.length; i++) {
         formData.append("files", files[i]);
       }
 
-      setUploadProgress(`Mengirim file ke server...`);
+      setUploadProgress(`Mengirim ke server...`);
       const res = await fetch(`https://${PROJECT_ID}.supabase.co/functions/v1/upload-drive-files`, {
         method: "POST",
         headers: {
@@ -236,34 +209,57 @@ const JadwalMonitoring = () => {
 
       if (!res.ok) {
         let errorMessage = "Gagal mengupload file";
-        let errorCode = "";
         try {
           const errorData = await res.json();
           errorMessage = errorData?.error || errorMessage;
-          errorCode = errorData?.code || "";
         } catch {
           errorMessage = await res.text();
         }
-
-        // If error suggests to login with Google, show that message
-        if (errorCode === "PLEASE_LOGIN_WITH_GOOGLE" || errorMessage.includes("login")) {
-          toast.error("Silakan login dengan Google untuk mengupload file");
-        } else {
-          throw new Error(errorMessage);
-        }
-        return;
+        throw new Error(errorMessage);
       }
 
       const result = await res.json();
       toast.success(`${result.uploadedFiles?.length || files.length} file berhasil diupload`);
       await refetch();
     } catch (err: any) {
+      console.error("Upload error:", err);
       toast.error(err?.message || "Gagal mengupload file");
     } finally {
       setIsUploading(false);
       setUploadProgress("");
       setUploadRow(null);
+      setPendingFiles(null);
+    }
+  };
+
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files || files.length === 0 || !uploadRow) {
       event.target.value = "";
+      return;
+    }
+
+    // Check if we have a valid token
+    const token = getStoredGoogleToken();
+    
+    if (token && !isTokenExpired(token)) {
+      // Token valid, proceed with upload
+      console.log("✅ Valid token found, uploading...");
+      await performUpload(files);
+      event.target.value = "";
+    } else {
+      // No token or expired, show sign-in modal
+      console.log("📱 No valid token, showing sign-in modal...");
+      setPendingFiles(files);
+      setShowGoogleSignIn(true);
+      event.target.value = "";
+    }
+  };
+
+  const handleGoogleSignInSuccess = async () => {
+    console.log("✅ Google sign-in successful, proceeding with upload...");
+    if (pendingFiles) {
+      await performUpload(pendingFiles);
     }
   };
 
@@ -606,6 +602,12 @@ const JadwalMonitoring = () => {
           multiple
           className="hidden"
           onChange={handleFileChange}
+        />
+
+        <GoogleSignInModal
+          open={showGoogleSignIn}
+          onClose={() => setShowGoogleSignIn(false)}
+          onSuccess={handleGoogleSignInSuccess}
         />
       </div>
     </TooltipProvider>
