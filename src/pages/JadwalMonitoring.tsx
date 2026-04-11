@@ -1,6 +1,7 @@
 import { useJadwalMonitoring } from "@/hooks/useSheetsData";
 import LoadingState from "@/components/LoadingState";
 import ErrorState from "@/components/ErrorState";
+import { GoogleSignInModal } from "@/components/GoogleSignInModal";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, FileEdit, Upload, Eye, ExternalLink, Loader2, ImageIcon } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -31,7 +32,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { toast } from "sonner";
-import { getValidGoogleToken } from "@/integrations/google/oauth";
+import { getValidGoogleToken, getStoredGoogleToken, isTokenExpired, clearGoogleToken } from "@/integrations/google/oauth";
 
 const PROJECT_ID = import.meta.env.VITE_SUPABASE_PROJECT_ID;
 const ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
@@ -67,6 +68,8 @@ const JadwalMonitoring = () => {
   const [uploadRow, setUploadRow] = useState<any>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState("");
+  const [pendingFiles, setPendingFiles] = useState<FileList | null>(null);
+  const [showGoogleSignIn, setShowGoogleSignIn] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // View files state
@@ -124,15 +127,19 @@ const JadwalMonitoring = () => {
 
   const getGoogleAccessToken = async () => {
     try {
+      // Use getValidGoogleToken which auto-refreshes if possible
       const token = await getValidGoogleToken();
+      console.log("✅ Got Google access token");
       return token.access_token;
     } catch (err: any) {
+      console.error("❌ Failed to get token:", err?.message);
       const rawMessage = String(err?.message || "").toLowerCase();
+      
       if (rawMessage.includes("popup") || rawMessage.includes("blocked")) {
-        throw new Error("Popup login Google diblokir. Izinkan popup lalu coba lagi.");
+        throw new Error("Popup login Google diblokir. Silakan coba lagi.");
       }
 
-      throw new Error("Login Google diperlukan untuk mengakses folder Drive personal.");
+      throw new Error("Login Google diperlukan untuk mengakses Drive Anda. " + (err?.message || ""));
     }
   };
 
@@ -253,8 +260,28 @@ const JadwalMonitoring = () => {
       return;
     }
 
-    await performUpload(files);
+    console.log("📂 File selected, checking token...");
+    const token = getStoredGoogleToken();
+    
+    // Check if token exists and is not expired
+    if (token && !isTokenExpired(token)) {
+      console.log("✅ Valid token found, uploading directly...");
+      await performUpload(files);
+    } else {
+      // No valid token, show login modal
+      console.log("📱 No valid token, showing login modal...");
+      setPendingFiles(files);
+      setShowGoogleSignIn(true);
+    }
+    
     event.target.value = "";
+  };
+
+  const handleGoogleSignInSuccess = async () => {
+    console.log("✅ Google sign-in successful, proceeding with upload...");
+    if (pendingFiles) {
+      await performUpload(pendingFiles);
+    }
   };
 
   const fetchDriveFiles = async (folderUrl: string, googleToken?: string) => {
@@ -619,6 +646,13 @@ const JadwalMonitoring = () => {
           multiple
           className="hidden"
           onChange={handleFileChange}
+        />
+
+        {/* Google Sign-In Modal */}
+        <GoogleSignInModal
+          open={showGoogleSignIn}
+          onClose={() => setShowGoogleSignIn(false)}
+          onSuccess={handleGoogleSignInSuccess}
         />
       </div>
     </TooltipProvider>
