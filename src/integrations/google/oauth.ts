@@ -16,44 +16,76 @@ export interface GoogleAuthToken {
   token_type: string;
 }
 
+let googleLibLoaded = false;
+
 /**
- * Initialize Google OAuth
+ * Load Google OAuth library if not already loaded
  */
-export function initializeGoogleAuth(): Promise<void> {
+async function ensureGoogleLibLoaded(): Promise<void> {
+  if (googleLibLoaded || window.google) {
+    return;
+  }
+
   return new Promise((resolve, reject) => {
     const script = document.createElement('script');
     script.src = 'https://accounts.google.com/gsi/client';
     script.async = true;
     script.defer = true;
-    script.onload = () => resolve();
+    script.onload = () => {
+      googleLibLoaded = true;
+      resolve();
+    };
     script.onerror = () => reject(new Error('Failed to load Google Auth library'));
+    script.onabort = () => reject(new Error('Google Auth library load aborted'));
     document.head.appendChild(script);
   });
 }
 
 /**
- * Request access token from Google OAuth
+ * Request access token from Google OAuth (loads library on-demand)
  */
 export async function requestGoogleAccessToken(): Promise<GoogleAuthToken> {
-  if (!window.google) {
-    throw new Error('Google OAuth library not loaded');
+  try {
+    await ensureGoogleLibLoaded();
+  } catch (err) {
+    console.error("❌ Failed to load Google library:", err);
+    throw err;
+  }
+
+  if (!window.google?.accounts?.oauth2) {
+    throw new Error('Google OAuth library not properly initialized');
   }
 
   return new Promise((resolve, reject) => {
+    const timeout = setTimeout(() => {
+      reject(new Error('Google OAuth request timeout'));
+    }, 30000);
+
     window.google.accounts.oauth2.initTokenClient({
       client_id: GOOGLE_CLIENT_ID,
       scope: GOOGLE_SCOPES.join(' '),
       callback: (response: any) => {
+        clearTimeout(timeout);
+
         if (response.error) {
-          reject(new Error(`Google OAuth error: ${response.error}`));
+          reject(new Error(`Google OAuth error: ${response.error} - ${response.error_description || ''}`));
+          return;
+        }
+
+        if (!response.access_token) {
+          reject(new Error('No access token received from Google'));
           return;
         }
 
         resolve({
           access_token: response.access_token,
-          expires_at: Date.now() + (response.expires_in * 1000),
+          expires_at: Date.now() + ((response.expires_in || 3600) * 1000),
           token_type: response.token_type || 'Bearer',
         });
+      },
+      error_callback: (error: any) => {
+        clearTimeout(timeout);
+        reject(new Error(`Google OAuth error: ${JSON.stringify(error)}`));
       },
     }).requestAccessToken({ prompt: 'consent' });
   });

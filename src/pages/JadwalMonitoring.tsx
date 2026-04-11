@@ -177,22 +177,54 @@ const JadwalMonitoring = () => {
     setUploadProgress(`Mengupload ${files.length} file...`);
 
     try {
+      // Try to get stored token first
+      let userToken = getStoredGoogleToken()?.access_token;
+
+      // If no token or token expired, request new token
+      if (!userToken) {
+        console.log("📱 No valid token, requesting Google auth...");
+        setUploadProgress(`Mohon login dengan Google...`);
+        
+        try {
+          const token = await getValidGoogleToken();
+          userToken = token.access_token;
+          console.log("✅ Got Google token");
+          setUploadProgress(`Mengupload ${files.length} file...`);
+        } catch (authErr: any) {
+          console.error("❌ Google auth failed:", authErr);
+          const errMsg = authErr?.message || "Gagal login dengan Google";
+          
+          // Check for specific error types
+          if (errMsg.includes("blocked") || errMsg.includes("ERR_BLOCKED")) {
+            toast.error("Google auth diblokir atau popup tertutup. Silakan coba lagi dan izinkan popup.");
+          } else if (errMsg.includes("timeout")) {
+            toast.error("Google auth timeout. Silakan coba lagi.");
+          } else {
+            toast.error(errMsg);
+          }
+          
+          setIsUploading(false);
+          setUploadProgress("");
+          event.target.value = "";
+          return;
+        }
+      }
+
       const formData = new FormData();
       formData.append("tanggal", uploadRow.tanggal);
       formData.append("karyawan", uploadRow.karyawan);
       formData.append("rowNumber", rowNumber.toString());
-
-      // Try to get user Google token
-      const storedToken = getStoredGoogleToken();
-      if (storedToken) {
-        console.log("📱 Using stored Google OAuth token");
-        formData.append("userToken", storedToken.access_token);
+      
+      if (userToken) {
+        formData.append("userToken", userToken);
+        console.log("📤 Sending file with Google token");
       }
 
       for (let i = 0; i < files.length; i++) {
         formData.append("files", files[i]);
       }
 
+      setUploadProgress(`Mengirim file ke server...`);
       const res = await fetch(`https://${PROJECT_ID}.supabase.co/functions/v1/upload-drive-files`, {
         method: "POST",
         headers: {
@@ -214,8 +246,8 @@ const JadwalMonitoring = () => {
         }
 
         // If error suggests to login with Google, show that message
-        if (errorCode === "PLEASE_LOGIN_WITH_GOOGLE") {
-          toast.error("Silakan login dengan Google terlebih dahulu untuk upload file");
+        if (errorCode === "PLEASE_LOGIN_WITH_GOOGLE" || errorMessage.includes("login")) {
+          toast.error("Silakan login dengan Google untuk mengupload file");
         } else {
           throw new Error(errorMessage);
         }
