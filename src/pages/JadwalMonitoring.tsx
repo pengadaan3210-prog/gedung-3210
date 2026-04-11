@@ -61,6 +61,13 @@ const JadwalMonitoring = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 10;
 
+  // Parse tanggal dari format "DD/MM/YYYY"
+  const parseDMY = (s: string) => {
+    const m = s?.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
+    if (m) return new Date(parseInt(m[3]), parseInt(m[2]) - 1, parseInt(m[1]));
+    return new Date(s);
+  };
+
   // Helper function untuk parse ISO date string dan normalize ke midnight
   const parseISODate = (isoStr: string): Date => {
     const [year, month, day] = isoStr.split('-');
@@ -170,12 +177,6 @@ const JadwalMonitoring = () => {
 
   if (isLoading) return <div className="p-6"><LoadingState /></div>;
   if (isError) return <div className="p-6"><ErrorState onRetry={() => refetch()} /></div>;
-
-  const parseDMY = (s: string) => {
-    const m = s?.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
-    if (m) return new Date(parseInt(m[3]), parseInt(m[2]) - 1, parseInt(m[1]));
-    return new Date(s);
-  };
 
   const sorted = [...normalizedData].sort((a, b) => {
     if (!a.tanggal || !b.tanggal) return 0;
