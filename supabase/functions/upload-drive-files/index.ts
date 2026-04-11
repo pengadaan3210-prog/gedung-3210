@@ -213,7 +213,26 @@ async function uploadFileToDrive(
 
   if (!uploadRes.ok) {
     const err = await uploadRes.text();
-    throw new Error(`Failed to upload file: ${err}`);
+    
+    // Parse error response to provide better messages
+    let errorDetail = '';
+    try {
+      const errorObj = JSON.parse(err);
+      if (errorObj.error?.message) {
+        errorDetail = errorObj.error.message;
+      }
+    } catch {
+      errorDetail = err;
+    }
+    
+    // Check for permission errors
+    if (uploadRes.status === 403) {
+      if (errorDetail.includes('Insufficient permissions')) {
+        throw new Error(`Permission denied: Akun Google Anda tidak punya akses untuk upload ke folder ini. Pastikan:\n1. Anda sudah login dengan akun Google yang tepat\n2. Akun tersebut punya akses ke folder Drive ini\n\nDetail: ${errorDetail}`);
+      }
+    }
+    
+    throw new Error(`Failed to upload file: ${errorDetail || err}`);
   }
 
   return await uploadRes.json();

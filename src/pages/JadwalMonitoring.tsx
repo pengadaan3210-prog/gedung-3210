@@ -236,8 +236,18 @@ const JadwalMonitoring = () => {
       });
 
       if (!res.ok) {
-        const { message } = await readErrorResponse(res);
-        throw new Error(message || "Gagal mengupload file");
+        const errorData = await readErrorResponse(res);
+        let message = errorData.message || "Gagal mengupload file";
+        
+        // Enhance permission error messages
+        if (res.status === 403) {
+          if (errorData.code === 'PLEASE_LOGIN_WITH_GOOGLE') {
+            message = "Folder Drive masih di My Drive. Admin perlu login dengan Google dan memindahkan folder ke Shared Drive terlebih dahulu.";
+          } else if (message.includes('Permission denied') || message.includes('Insufficient permissions')) {
+            message = `Akun Google Anda tidak punya akses.\n\n💡 Solusi:\n1. Pastikan sudah login dengan akun Google yang benar\n2. Coba logout dan login ulang di perangkat ini\n3. Minta admin untuk memberikan akses ke folder Drive\n\n${message}`;
+          }
+        }
+        throw new Error(message);
       }
 
       const result = await res.json();

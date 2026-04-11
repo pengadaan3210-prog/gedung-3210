@@ -148,15 +148,48 @@ export function isTokenExpired(token: GoogleAuthToken): boolean {
 /**
  * Store token in localStorage
  */
+/**
+ * Store token - use multiple storage strategies for better mobile support
+ */
 export function storeGoogleToken(token: GoogleAuthToken): void {
-  localStorage.setItem('google_auth_token', JSON.stringify(token));
+  const tokenStr = JSON.stringify(token);
+  try {
+    localStorage.setItem('google_auth_token', tokenStr);
+  } catch (e) {
+    console.warn('⚠️ localStorage failed, trying sessionStorage:', e);
+  }
+  try {
+    sessionStorage.setItem('google_auth_token', tokenStr);
+  } catch (e) {
+    console.warn('⚠️ sessionStorage also failed:', e);
+  }
 }
 
 /**
- * Get stored token
+ * Get stored token - check multiple storage strategies
  */
 export function getStoredGoogleToken(): GoogleAuthToken | null {
-  const stored = localStorage.getItem('google_auth_token');
+  let stored: string | null = null;
+  
+  // Try localStorage first
+  try {
+    stored = localStorage.getItem('google_auth_token');
+  } catch (e) {
+    console.warn('⚠️ Failed to read from localStorage');
+  }
+  
+  // Fallback to sessionStorage if localStorage empty/failed
+  if (!stored) {
+    try {
+      stored = sessionStorage.getItem('google_auth_token');
+      if (stored) console.log('📦 Token loaded from sessionStorage');
+    } catch (e) {
+      console.warn('⚠️ Failed to read from sessionStorage');
+    }
+  } else {
+    console.log('📦 Token loaded from localStorage');
+  }
+  
   if (!stored) return null;
   try {
     return JSON.parse(stored);
@@ -166,10 +199,19 @@ export function getStoredGoogleToken(): GoogleAuthToken | null {
 }
 
 /**
- * Clear stored token
+ * Clear stored token from all storage
  */
 export function clearGoogleToken(): void {
-  localStorage.removeItem('google_auth_token');
+  try {
+    localStorage.removeItem('google_auth_token');
+  } catch (e) {
+    console.warn('⚠️ Failed to clear localStorage');
+  }
+  try {
+    sessionStorage.removeItem('google_auth_token');
+  } catch (e) {
+    console.warn('⚠️ Failed to clear sessionStorage');
+  }
 }
 
 /**
