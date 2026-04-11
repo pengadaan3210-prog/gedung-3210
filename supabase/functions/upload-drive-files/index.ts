@@ -258,6 +258,14 @@ serve(async (req) => {
     const karyawan = formData.get('karyawan') as string;
     const rowNumber = formData.get('rowNumber') as string;
 
+    console.log('📝 Form data received:', {
+      hasUserToken: !!userToken,
+      tokenLength: userToken?.length || 0,
+      tanggal,
+      karyawan,
+      rowNumber,
+    });
+
     if (!tanggal || !karyawan || !rowNumber) {
       return new Response(JSON.stringify({ error: 'Missing tanggal, karyawan, or rowNumber' }), {
         status: 400,
@@ -268,12 +276,12 @@ serve(async (req) => {
     let accessToken: string;
 
     // Try to use user token first (OAuth)
-    if (userToken) {
+    if (userToken && userToken.trim()) {
       console.log('📱 Using user OAuth token');
       accessToken = userToken;
     } else {
       // Fallback to service account
-      console.log('🔑 Using service account token');
+      console.log('🔑 Using service account token (no user token provided)');
       const saJson = Deno.env.get('GOOGLE_SERVICE_ACCOUNT_JSON');
       if (!saJson) throw new Error('GOOGLE_SERVICE_ACCOUNT_JSON not configured and no userToken provided');
 
