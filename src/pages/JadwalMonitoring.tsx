@@ -832,7 +832,7 @@ const JadwalMonitoring = () => {
                                   size="icon"
                                   variant="ghost"
                                   className="h-8 w-8 text-muted-foreground hover:text-primary"
-                                  onClick={() => openNoteEditor(item)}
+                                  onClick={(e) => { e.stopPropagation(); openNoteEditor(item); }}
                                 >
                                   <FileEdit className="h-4 w-4" />
                                 </Button>
@@ -847,7 +847,7 @@ const JadwalMonitoring = () => {
                                   size="icon"
                                   variant="ghost"
                                   className="h-8 w-8 text-muted-foreground hover:text-primary"
-                                  onClick={() => handleUploadClick(item)}
+                                  onClick={(e) => { e.stopPropagation(); handleUploadClick(item); }}
                                   disabled={isUploading}
                                 >
                                   <Upload className="h-4 w-4" />
