@@ -63,63 +63,29 @@ const JadwalMonitoring = () => {
 
   // Helper function untuk match tanggal dengan range
   const getTahapanForDate = (tanggal: string): string => {
-    if (!tanggal || !kurvaSPlanning.length) {
-      console.warn(`⚠️ getTahapanForDate: tanggal=${tanggal}, kurvaSPlanning.length=${kurvaSPlanning.length}`);
-      return "-";
-    }
+    if (!tanggal || !kurvaSPlanning.length) return "-";
     
     // Parse tanggal dari format "DD/MM/YYYY"
     const parts = tanggal?.split(/[\/\-]/);
     if (parts.length !== 3) return "-";
     
     const targetDate = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
-    console.log(`🔍 Matching date: ${tanggal} → ${targetDate.toLocaleDateString('id-ID')}`);
-    
     if (isNaN(targetDate.getTime())) return "-";
     
     // Find matching tahapan
     const matching = kurvaSPlanning.find(tahapan => {
-      // Parse tanggalAwal dan tanggalAkhir dengan cara yang sama (DD/MM/YYYY)
       let startDate: Date;
       let endDate: Date;
       
-      if (typeof tahapan.tanggalAwal === 'string') {
-        const startParts = tahapan.tanggalAwal.split(/[\/\-]/);
-        if (startParts.length === 3) {
-          startDate = new Date(parseInt(startParts[2]), parseInt(startParts[1]) - 1, parseInt(startParts[0]));
-        } else {
-          startDate = new Date(tahapan.tanggalAwal);
-        }
-      } else {
-        startDate = new Date(tahapan.tanggalAwal);
-      }
+      // tanggalAwal & tanggalAkhir dari backend adalah ISO format: "YYYY-MM-DD"
+      startDate = new Date(tahapan.tanggalAwal);
+      endDate = new Date(tahapan.tanggalAkhir);
       
-      if (typeof tahapan.tanggalAkhir === 'string') {
-        const endParts = tahapan.tanggalAkhir.split(/[\/\-]/);
-        if (endParts.length === 3) {
-          endDate = new Date(parseInt(endParts[2]), parseInt(endParts[1]) - 1, parseInt(endParts[0]));
-        } else {
-          endDate = new Date(tahapan.tanggalAkhir);
-        }
-      } else {
-        endDate = new Date(tahapan.tanggalAkhir);
-      }
+      // Tambah 1 hari ke endDate agar inclusive
+      endDate.setDate(endDate.getDate() + 1);
       
-      const isMatch = targetDate >= startDate && targetDate <= endDate;
-      if (isMatch) {
-        console.log(`✅ Match found: ${tahapan.deskripsiTahapan} (${startDate.toLocaleDateString('id-ID')} - ${endDate.toLocaleDateString('id-ID')})`);
-      }
-      return isMatch;
+      return targetDate >= startDate && targetDate < endDate;
     });
-    
-    if (!matching) {
-      console.log(`❌ No match found for ${tanggal}`);
-      console.log(`📋 Available tahapan:`, kurvaSPlanning.map(t => ({
-        desc: t.deskripsiTahapan,
-        awal: t.tanggalAwal,
-        akhir: t.tanggalAkhir
-      })));
-    }
     
     return matching?.deskripsiTahapan || "-";
   };
