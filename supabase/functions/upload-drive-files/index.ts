@@ -94,9 +94,8 @@ function formatTanggalFolder(tanggalStr: string): string {
 
 // Find or create a folder by name under parent
 async function findOrCreateFolder(accessToken: string, folderName: string, parentId: string): Promise<string> {
-  // Search for existing folder
   const query = `name='${folderName}' and '${parentId}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`;
-  const searchUrl = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(query)}&fields=files(id,name)`;
+  const searchUrl = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(query)}&fields=files(id,name)&supportsAllDrives=true&includeItemsFromAllDrives=true`;
   
   const searchRes = await fetch(searchUrl, {
     headers: { Authorization: `Bearer ${accessToken}` },
@@ -113,8 +112,7 @@ async function findOrCreateFolder(accessToken: string, folderName: string, paren
     return searchData.files[0].id;
   }
   
-  // Create new folder
-  const createRes = await fetch('https://www.googleapis.com/drive/v3/files', {
+  const createRes = await fetch('https://www.googleapis.com/drive/v3/files?supportsAllDrives=true', {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${accessToken}`,
@@ -140,7 +138,7 @@ async function findOrCreateFolder(accessToken: string, folderName: string, paren
 // Count existing files with same prefix in folder
 async function countExistingFiles(accessToken: string, folderId: string, prefix: string): Promise<number> {
   const query = `'${folderId}' in parents and name contains '${prefix}' and trashed=false`;
-  const url = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(query)}&fields=files(id,name)`;
+  const url = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(query)}&fields=files(id,name)&supportsAllDrives=true&includeItemsFromAllDrives=true`;
   
   const res = await fetch(url, {
     headers: { Authorization: `Bearer ${accessToken}` },
@@ -186,7 +184,7 @@ async function uploadFileToDrive(
   });
 
   const uploadRes = await fetch(
-    'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,webViewLink',
+    'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,webViewLink&supportsAllDrives=true',
     {
       method: 'POST',
       headers: {

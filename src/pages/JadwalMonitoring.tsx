@@ -78,9 +78,15 @@ const JadwalMonitoring = () => {
   if (isLoading) return <div className="p-6"><LoadingState /></div>;
   if (isError) return <div className="p-6"><ErrorState onRetry={() => refetch()} /></div>;
 
+  const parseDMY = (s: string) => {
+    const m = s?.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
+    if (m) return new Date(parseInt(m[3]), parseInt(m[2]) - 1, parseInt(m[1]));
+    return new Date(s);
+  };
+
   const sorted = [...normalizedData].sort((a, b) => {
     if (!a.tanggal || !b.tanggal) return 0;
-    return new Date(b.tanggal).getTime() - new Date(a.tanggal).getTime();
+    return parseDMY(b.tanggal).getTime() - parseDMY(a.tanggal).getTime();
   });
 
   const filtered = sorted.filter((item) => {
@@ -238,11 +244,16 @@ const JadwalMonitoring = () => {
   const formatTanggal = (tanggal: string) => {
     if (!tanggal) return "-";
     try {
-      return new Date(tanggal).toLocaleDateString("id-ID", {
-        day: "numeric",
-        month: "long",
-        year: "numeric",
-      });
+      // Parse DD/MM/YYYY format explicitly
+      const dmy = tanggal.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
+      if (dmy) {
+        const day = parseInt(dmy[1]);
+        const month = parseInt(dmy[2]) - 1;
+        const year = parseInt(dmy[3]);
+        const date = new Date(year, month, day);
+        return date.toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" });
+      }
+      return new Date(tanggal).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" });
     } catch {
       return tanggal;
     }
