@@ -3,7 +3,7 @@ import LoadingState from "@/components/LoadingState";
 import ErrorState from "@/components/ErrorState";
 import { GoogleSignInModal } from "@/components/GoogleSignInModal";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, FileEdit, Upload, Eye, ExternalLink, Loader2, ImageIcon } from "lucide-react";
+import { Calendar, FileEdit, Upload, Eye, ExternalLink, Loader2, ImageIcon, ArrowUp, ArrowDown, FileText } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Separator } from "@/components/ui/separator";
 import {
   Tooltip,
   TooltipContent,
@@ -60,6 +61,16 @@ const JadwalMonitoring = () => {
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 10;
+
+  // Sort state
+  const [sortColumn, setSortColumn] = useState<string | null>("no");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+
+  // Filter state
+  const [filterTanggal, setFilterTanggal] = useState("");
+  const [filterKaryawan, setFilterKaryawan] = useState("");
+  const [filterStatus, setFilterStatus] = useState("");
+  const [showFilter, setShowFilter] = useState(false);
 
   // Parse tanggal dari format "DD/MM/YYYY"
   const parseDMY = (s: string) => {
@@ -168,6 +179,11 @@ const JadwalMonitoring = () => {
   const [viewFiles, setViewFiles] = useState<DriveFile[]>([]);
   const [isLoadingFiles, setIsLoadingFiles] = useState(false);
 
+  // Detail row dialog state
+  const [detailRow, setDetailRow] = useState<any>(null);
+  const [detailFiles, setDetailFiles] = useState<DriveFile[]>([]);
+  const [isLoadingDetailFiles, setIsLoadingDetailFiles] = useState(false);
+
   const normalizedData = useMemo(() => (data || []).map((row) => ({
     ...normalizeScheduleRow(row),
     tahapan: getTahapanForDate(row.tanggal),
@@ -178,20 +194,81 @@ const JadwalMonitoring = () => {
   if (isLoading) return <div className="p-6"><LoadingState /></div>;
   if (isError) return <div className="p-6"><ErrorState onRetry={() => refetch()} /></div>;
 
+  // Handle sort column click
+  const handleSortColumn = (column: string) => {
+    if (sortColumn === column) {
+      // Toggle direction jika kolom sama
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      // Set sorting untuk kolom baru
+      setSortColumn(column);
+      setSortDirection("asc");
+    }
+    setCurrentPage(1);
+  };
+
+  // Apply sort
   const sorted = [...normalizedData].sort((a, b) => {
-    if (!a.tanggal || !b.tanggal) return 0;
-    return parseDMY(b.tanggal).getTime() - parseDMY(a.tanggal).getTime();
+    let aVal: any = "";
+    let bVal: any = "";
+
+    switch (sortColumn) {
+      case "no":
+        aVal = parseInt(a.no || a.__rowNumber || a.rowNumber || "0", 10);
+        bVal = parseInt(b.no || b.__rowNumber || b.rowNumber || "0", 10);
+        break;
+      case "mingguKe":
+        aVal = a.mingguKe || 0;
+        bVal = b.mingguKe || 0;
+        break;
+      case "tanggal":
+        aVal = a.tanggal ? parseDMY(a.tanggal).getTime() : 0;
+        bVal = b.tanggal ? parseDMY(b.tanggal).getTime() : 0;
+        break;
+      case "karyawan":
+        aVal = (a.karyawan || "").toLowerCase();
+        bVal = (b.karyawan || "").toLowerCase();
+        break;
+      case "tahapan":
+        aVal = (a.tahapan || "").toLowerCase();
+        bVal = (b.tahapan || "").toLowerCase();
+        break;
+      case "status":
+        aVal = (a.computedStatus || "").toLowerCase();
+        bVal = (b.computedStatus || "").toLowerCase();
+        break;
+      default:
+        return 0;
+    }
+
+    if (aVal < bVal) return sortDirection === "asc" ? -1 : 1;
+    if (aVal > bVal) return sortDirection === "asc" ? 1 : -1;
+    return 0;
   });
 
+  // Apply filter
   const filtered = sorted.filter((item) => {
-    if (!search) return true;
-    const s = search.toLowerCase();
-    return (
-      item.karyawan?.toLowerCase().includes(s) ||
-      item.status?.toLowerCase().includes(s) ||
-      item.catatan_lapangan?.toLowerCase().includes(s) ||
-      item.hari_ke_x?.toString().toLowerCase().includes(s)
-    );
+    // Filter tanggal
+    if (filterTanggal && item.tanggal !== filterTanggal) return false;
+    
+    // Filter karyawan
+    if (filterKaryawan && !item.karyawan?.toLowerCase().includes(filterKaryawan.toLowerCase())) return false;
+    
+    // Filter status
+    if (filterStatus && item.computedStatus !== filterStatus) return false;
+    
+    // Search filter
+    if (search) {
+      const s = search.toLowerCase();
+      return (
+        item.karyawan?.toLowerCase().includes(s) ||
+        item.computedStatus?.toLowerCase().includes(s) ||
+        item.catatan_lapangan?.toLowerCase().includes(s) ||
+        item.hari_ke_x?.toString().toLowerCase().includes(s)
+      );
+    }
+    
+    return true;
   });
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / ITEMS_PER_PAGE));
@@ -199,6 +276,35 @@ const JadwalMonitoring = () => {
   const paginatedData = filtered.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
   const goPage = (page: number) => setCurrentPage(Math.max(1, Math.min(page, totalPages)));
+
+  // Update Status di sheet
+  const updateStatusInSheet = async (row: any) => {
+    try {
+      const rowNumber = parseInt(row.__rowNumber || row.rowNumber || "0", 10);
+      if (!rowNumber || rowNumber <= 0) return;
+
+      const computedStatus = getStatusValue(row);
+      
+      // Jika status "-", tidak perlu update
+      if (computedStatus === "-") return;
+
+      const res = await fetch(`https://${PROJECT_ID}.supabase.co/functions/v1/update-sheet-row`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          sheetName: "Jadwal Monitoring",
+          rowNumber,
+          updates: { status: computedStatus },
+        }),
+      });
+
+      if (!res.ok) {
+        console.error("Failed to update status:", await res.text());
+      }
+    } catch (err: any) {
+      console.error("Error updating status:", err?.message);
+    }
+  };
 
   const readErrorResponse = async (res: Response) => {
     try {
@@ -272,7 +378,13 @@ const JadwalMonitoring = () => {
         }),
       });
       if (!res.ok) throw new Error(await res.text());
+      
       toast.success("Catatan berhasil disimpan");
+      
+      // Update status setelah catatan disimpan
+      const updatedRow = { ...noteRow, catatan_lapangan: noteDraft };
+      await updateStatusInSheet(updatedRow);
+      
       await refetch();
       setNoteRow(null);
     } catch (err: any) {
@@ -344,6 +456,11 @@ const JadwalMonitoring = () => {
 
       const result = await res.json();
       toast.success(`${result.uploadedFiles?.length || files.length} file berhasil diupload`);
+      
+      // Update status setelah upload berhasil
+      const updatedRow = { ...uploadRow, link_dokumen_bukti: result.folderLink };
+      await updateStatusInSheet(updatedRow);
+      
       await refetch();
     } catch (err: any) {
       console.error("Upload error:", err);
@@ -438,6 +555,45 @@ const JadwalMonitoring = () => {
     }
   };
 
+  // === DETAIL MODAL ===
+  const handleOpenDetailModal = async (row: any) => {
+    setDetailRow(row);
+    setDetailFiles([]);
+    
+    const link = row.link_dokumen_bukti;
+    if (!link) return;
+
+    setIsLoadingDetailFiles(true);
+
+    try {
+      let res = await fetchDriveFiles(link);
+
+      if (!res.ok) {
+        const firstError = await readErrorResponse(res);
+
+        if (firstError.code === "PLEASE_LOGIN_WITH_GOOGLE") {
+          const googleToken = await getGoogleAccessToken();
+          res = await fetchDriveFiles(link, googleToken);
+        } else {
+          throw new Error(firstError.message || "Gagal memuat daftar file");
+        }
+      }
+
+      if (!res.ok) {
+        const secondError = await readErrorResponse(res);
+        throw new Error(secondError.message || "Gagal memuat daftar file");
+      }
+
+      const data = await res.json();
+      setDetailFiles(data.files || []);
+    } catch (err: any) {
+      toast.error(err?.message || "Gagal memuat daftar file");
+      console.error(err);
+    } finally {
+      setIsLoadingDetailFiles(false);
+    }
+  };
+
   const formatTanggal = (tanggal: string) => {
     if (!tanggal) return "-";
     try {
@@ -473,6 +629,13 @@ const JadwalMonitoring = () => {
             onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
             className="max-w-xs"
           />
+          <Button
+            variant={showFilter ? "default" : "outline"}
+            size="sm"
+            onClick={() => setShowFilter(!showFilter)}
+          >
+            🔍 Filter
+          </Button>
           {isUploading && (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -480,6 +643,58 @@ const JadwalMonitoring = () => {
             </div>
           )}
         </div>
+
+        {showFilter && (
+          <div className="bg-muted/50 p-4 rounded-lg border space-y-3">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div>
+                <Label className="text-xs font-medium">Tanggal</Label>
+                <Input
+                  type="date"
+                  value={filterTanggal}
+                  onChange={(e) => { setFilterTanggal(e.target.value); setCurrentPage(1); }}
+                  className="text-sm"
+                />
+              </div>
+              <div>
+                <Label className="text-xs font-medium">Karyawan</Label>
+                <Input
+                  placeholder="Cari nama..."
+                  value={filterKaryawan}
+                  onChange={(e) => { setFilterKaryawan(e.target.value); setCurrentPage(1); }}
+                  className="text-sm"
+                />
+              </div>
+              <div>
+                <Label className="text-xs font-medium">Status</Label>
+                <select
+                  value={filterStatus}
+                  onChange={(e) => { setFilterStatus(e.target.value); setCurrentPage(1); }}
+                  className="w-full h-9 px-3 rounded-md border border-input bg-background text-sm"
+                >
+                  <option value="">Semua Status</option>
+                  <option value="Hadir">Hadir</option>
+                  <option value="Tidak Hadir">Tidak Hadir</option>
+                  <option value="-">-</option>
+                </select>
+              </div>
+            </div>
+            {(filterTanggal || filterKaryawan || filterStatus) && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setFilterTanggal("");
+                  setFilterKaryawan("");
+                  setFilterStatus("");
+                  setCurrentPage(1);
+                }}
+              >
+                Clear Filter
+              </Button>
+            )}
+          </div>
+        )}
 
         {filtered.length === 0 ? (
           <p className="text-sm text-muted-foreground text-center py-8">
@@ -491,14 +706,74 @@ const JadwalMonitoring = () => {
               <Table>
                 <TableHeader>
                   <TableRow className="bg-muted/30">
-                    <TableHead className="w-14 text-center">No</TableHead>
-                    <TableHead className="w-24">Hari ke-X</TableHead>
-                    <TableHead className="w-20">Minggu ke-x</TableHead>
-                    <TableHead>Tanggal</TableHead>
-                    <TableHead>Karyawan</TableHead>
-                    <TableHead>Tahapan / Pekerjaan</TableHead>
+                    <TableHead 
+                      className="w-14 text-center cursor-pointer hover:bg-muted/60"
+                      onClick={() => handleSortColumn("no")}
+                    >
+                      <div className="flex items-center justify-center gap-1">
+                        No
+                        {sortColumn === "no" && (
+                          sortDirection === "asc" ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />
+                        )}
+                      </div>
+                    </TableHead>
+                    <TableHead className="w-24">Hari ke-</TableHead>
+                    <TableHead 
+                      className="w-32 cursor-pointer hover:bg-muted/60"
+                      onClick={() => handleSortColumn("tanggal")}
+                    >
+                      <div className="flex items-center gap-1">
+                        Tanggal
+                        {sortColumn === "tanggal" && (
+                          sortDirection === "asc" ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />
+                        )}
+                      </div>
+                    </TableHead>
+                    <TableHead 
+                      className="w-20 cursor-pointer hover:bg-muted/60"
+                      onClick={() => handleSortColumn("mingguKe")}
+                    >
+                      <div className="flex items-center gap-1">
+                        Minggu ke-
+                        {sortColumn === "mingguKe" && (
+                          sortDirection === "asc" ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />
+                        )}
+                      </div>
+                    </TableHead>
+                    <TableHead 
+                      className="cursor-pointer hover:bg-muted/60"
+                      onClick={() => handleSortColumn("karyawan")}
+                    >
+                      <div className="flex items-center gap-1">
+                        Karyawan
+                        {sortColumn === "karyawan" && (
+                          sortDirection === "asc" ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />
+                        )}
+                      </div>
+                    </TableHead>
+                    <TableHead 
+                      className="cursor-pointer hover:bg-muted/60"
+                      onClick={() => handleSortColumn("tahapan")}
+                    >
+                      <div className="flex items-center gap-1">
+                        Tahapan / Pekerjaan
+                        {sortColumn === "tahapan" && (
+                          sortDirection === "asc" ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />
+                        )}
+                      </div>
+                    </TableHead>
                     <TableHead>Catatan Lapangan</TableHead>
-                    <TableHead className="w-28">Status</TableHead>
+                    <TableHead 
+                      className="w-28 cursor-pointer hover:bg-muted/60"
+                      onClick={() => handleSortColumn("status")}
+                    >
+                      <div className="flex items-center gap-1">
+                        Status
+                        {sortColumn === "status" && (
+                          sortDirection === "asc" ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />
+                        )}
+                      </div>
+                    </TableHead>
                     <TableHead className="w-28 text-center">Aksi</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -506,21 +781,25 @@ const JadwalMonitoring = () => {
                   {paginatedData.map((item, index) => {
                     const hasLink = !!item.link_dokumen_bukti;
                     return (
-                      <TableRow key={item.no || index}>
+                      <TableRow 
+                        key={item.no || index}
+                        className="cursor-pointer hover:bg-muted/50 transition-colors"
+                        onClick={() => handleOpenDetailModal(item)}
+                      >
                         <TableCell className="text-center font-medium text-muted-foreground">
                           {item.no || startIndex + index + 1}
                         </TableCell>
                         <TableCell className="font-medium">{item.hari_ke_x || "-"}</TableCell>
-                        <TableCell className="text-center font-medium">
-                          {item.mingguKe || "-"}
-                        </TableCell>
-                        <TableCell>
+                        <TableCell className="w-32">
                           {item.tanggal ? (
                             <div className="flex items-center gap-2 text-sm">
                               <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
                               {formatTanggal(item.tanggal)}
                             </div>
                           ) : "-"}
+                        </TableCell>
+                        <TableCell className="text-center font-medium">
+                          {item.mingguKe || "-"}
                         </TableCell>
                         <TableCell className="font-medium">{item.karyawan || "-"}</TableCell>
                         <TableCell className="max-w-[250px]">
@@ -747,6 +1026,159 @@ const JadwalMonitoring = () => {
           className="hidden"
           onChange={handleFileChange}
         />
+
+        {/* === MODAL: Detail Jadwal === */}
+        <Dialog open={!!detailRow} onOpenChange={(open) => { if (!open) { setDetailRow(null); setDetailFiles([]); } }}>
+          <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="text-lg font-bold">Detail Jadwal Monitoring</DialogTitle>
+              <DialogDescription>
+                {detailRow?.karyawan} • {detailRow?.tanggal ? formatTanggal(detailRow.tanggal) : "-"}
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-6 py-4">
+              {/* Row Details */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <div className="text-xs text-muted-foreground font-medium mb-1">No</div>
+                  <div className="text-sm font-medium">{detailRow?.no || "-"}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-muted-foreground font-medium mb-1">Hari ke-</div>
+                  <div className="text-sm">{detailRow?.hari_ke_x || "-"}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-muted-foreground font-medium mb-1">Tanggal</div>
+                  <div className="text-sm flex items-center gap-2">
+                    <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
+                    {detailRow?.tanggal ? formatTanggal(detailRow.tanggal) : "-"}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-xs text-muted-foreground font-medium mb-1">Minggu ke-</div>
+                  <div className="text-sm">{detailRow?.mingguKe || "-"}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-muted-foreground font-medium mb-1">Karyawan</div>
+                  <div className="text-sm font-medium">{detailRow?.karyawan || "-"}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-muted-foreground font-medium mb-1">Status</div>
+                  <div>{getStatusBadge(detailRow?.computedStatus)}</div>
+                </div>
+              </div>
+
+              <Separator />
+
+              {/* Tahapan / Pekerjaan */}
+              <div>
+                <div className="text-xs text-muted-foreground font-medium mb-2">Tahapan / Pekerjaan</div>
+                {detailRow?.tahapan && detailRow.tahapan !== "-" ? (
+                  <Badge variant="outline" className="w-fit">{detailRow.tahapan}</Badge>
+                ) : (
+                  <span className="text-sm text-muted-foreground italic">-</span>
+                )}
+              </div>
+
+              {/* Catatan Lapangan */}
+              <div>
+                <div className="text-xs text-muted-foreground font-medium mb-2">Catatan Lapangan</div>
+                <div className="text-sm bg-muted/30 p-3 rounded-md min-h-[60px] whitespace-pre-wrap">
+                  {detailRow?.catatan_lapangan || <span className="text-muted-foreground italic">Belum ada catatan</span>}
+                </div>
+              </div>
+
+              <Separator />
+
+              {/* Foto & Dokumen */}
+              <div>
+                <div className="text-xs text-muted-foreground font-medium mb-2 flex items-center gap-1">
+                  <FileText className="h-3.5 w-3.5" />
+                  Foto & Dokumen
+                </div>
+
+                {isLoadingDetailFiles ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                    <span className="ml-2 text-sm text-muted-foreground">Memuat file...</span>
+                  </div>
+                ) : detailFiles.length === 0 ? (
+                  <div className="text-center py-8 bg-muted/20 rounded-md border-2 border-dashed border-muted-foreground/20">
+                    <ImageIcon className="h-8 w-8 mx-auto text-muted-foreground/40 mb-2" />
+                    <p className="text-sm text-muted-foreground">Belum ada file dokumentasi</p>
+                    {detailRow?.link_dokumen_bukti && (
+                      <a
+                        href={detailRow.link_dokumen_bukti}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-sm text-primary hover:underline mt-3"
+                      >
+                        <ExternalLink className="h-3.5 w-3.5" />
+                        Buka folder di Google Drive
+                      </a>
+                    )}
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <p className="text-xs text-muted-foreground">Klik gambar untuk membuka ukuran penuh</p>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                      {detailFiles.map((file) => {
+                        const isImage = file.mimeType?.startsWith("image/");
+                        return (
+                          <a
+                            key={file.id}
+                            href={file.viewUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="group block border rounded-lg overflow-hidden hover:border-primary/50 hover:shadow-md transition-all"
+                            title={file.name}
+                          >
+                            <div className="aspect-square bg-muted/30 flex items-center justify-center overflow-hidden">
+                              {isImage ? (
+                                <img
+                                  src={file.thumbnailUrl}
+                                  alt={file.name}
+                                  className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                                  loading="lazy"
+                                />
+                              ) : (
+                                <div className="flex flex-col items-center gap-1 text-muted-foreground">
+                                  <FileText className="h-6 w-6" />
+                                  <span className="text-xs text-center px-1 break-words">{file.mimeType?.split("/")[1] || "file"}</span>
+                                </div>
+                              )}
+                            </div>
+                            <div className="p-2 bg-muted/20">
+                              <p className="text-xs truncate font-medium text-foreground">{file.name}</p>
+                            </div>
+                          </a>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setDetailRow(null)}>Tutup</Button>
+              {detailRow?.link_dokumen_bukti && (
+                <a
+                  href={detailRow.link_dokumen_bukti}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex"
+                >
+                  <Button variant="outline">
+                    <ExternalLink className="mr-2 h-4 w-4" />
+                    Google Drive
+                  </Button>
+                </a>
+              )}
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         {/* Google Sign-In Modal */}
         <GoogleSignInModal
