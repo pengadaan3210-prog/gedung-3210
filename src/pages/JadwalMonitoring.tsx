@@ -1,9 +1,8 @@
 import { useJadwalMonitoring } from "@/hooks/useSheetsData";
 import LoadingState from "@/components/LoadingState";
 import ErrorState from "@/components/ErrorState";
-import { GoogleSignInModal } from "@/components/GoogleSignInModal";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, FileEdit, Upload, Eye, ExternalLink, X, Loader2, ImageIcon } from "lucide-react";
+import { Calendar, FileEdit, Upload, Eye, ExternalLink, Loader2, ImageIcon } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -32,7 +31,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { toast } from "sonner";
-import { getValidGoogleToken, getStoredGoogleToken, isTokenExpired } from "@/integrations/google/oauth";
+import { getValidGoogleToken } from "@/integrations/google/oauth";
 
 const PROJECT_ID = import.meta.env.VITE_SUPABASE_PROJECT_ID;
 const ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
@@ -68,8 +67,6 @@ const JadwalMonitoring = () => {
   const [uploadRow, setUploadRow] = useState<any>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState("");
-  const [pendingFiles, setPendingFiles] = useState<FileList | null>(null);
-  const [showGoogleSignIn, setShowGoogleSignIn] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // View files state
@@ -109,6 +106,35 @@ const JadwalMonitoring = () => {
   const paginatedData = filtered.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
   const goPage = (page: number) => setCurrentPage(Math.max(1, Math.min(page, totalPages)));
+
+  const readErrorResponse = async (res: Response) => {
+    try {
+      const data = await res.json();
+      return {
+        message: data?.error || "Terjadi kesalahan",
+        code: data?.code as string | undefined,
+      };
+    } catch {
+      return {
+        message: await res.text(),
+        code: undefined,
+      };
+    }
+  };
+
+  const getGoogleAccessToken = async () => {
+    try {
+      const token = await getValidGoogleToken();
+      return token.access_token;
+    } catch (err: any) {
+      const rawMessage = String(err?.message || "").toLowerCase();
+      if (rawMessage.includes("popup") || rawMessage.includes("blocked")) {
+        throw new Error("Popup login Google diblokir. Izinkan popup lalu coba lagi.");
+      }
+
+      throw new Error("Login Google diperlukan untuk mengakses folder Drive personal.");
+    }
+  };
 
   const getStatusBadge = (status: string) => {
     switch (status?.toLowerCase()) {
@@ -176,16 +202,11 @@ const JadwalMonitoring = () => {
     }
 
     setIsUploading(true);
-    setUploadProgress(`Mengirim ${files.length} file...`);
+    setUploadProgress(`Menyiapkan upload ${files.length} file...`);
 
     try {
-      let userToken = getStoredGoogleToken()?.access_token;
-
-      if (!userToken) {
-        console.log("❌ No token available");
-        toast.error("Token tidak tersedia. Silakan login lagi.");
-        return;
-      }
+      setUploadProgress("Menghubungkan Google Drive...");
+      const userToken = await getGoogleAccessToken();
 
       const formData = new FormData();
       formData.append("tanggal", uploadRow.tanggal);
@@ -208,14 +229,8 @@ const JadwalMonitoring = () => {
       });
 
       if (!res.ok) {
-        let errorMessage = "Gagal mengupload file";
-        try {
-          const errorData = await res.json();
-          errorMessage = errorData?.error || errorMessage;
-        } catch {
-          errorMessage = await res.text();
-        }
-        throw new Error(errorMessage);
+        const { message } = await readErrorResponse(res);
+        throw new Error(message || "Gagal mengupload file");
       }
 
       const result = await res.json();
@@ -228,7 +243,6 @@ const JadwalMonitoring = () => {
       setIsUploading(false);
       setUploadProgress("");
       setUploadRow(null);
-      setPendingFiles(null);
     }
   };
 
@@ -239,28 +253,22 @@ const JadwalMonitoring = () => {
       return;
     }
 
-    // Check if we have a valid token
-    const token = getStoredGoogleToken();
-    
-    if (token && !isTokenExpired(token)) {
-      // Token valid, proceed with upload
-      console.log("✅ Valid token found, uploading...");
-      await performUpload(files);
-      event.target.value = "";
-    } else {
-      // No token or expired, show sign-in modal
-      console.log("📱 No valid token, showing sign-in modal...");
-      setPendingFiles(files);
-      setShowGoogleSignIn(true);
-      event.target.value = "";
-    }
+    await performUpload(files);
+    event.target.value = "";
   };
 
-  const handleGoogleSignInSuccess = async () => {
-    console.log("✅ Google sign-in successful, proceeding with upload...");
-    if (pendingFiles) {
-      await performUpload(pendingFiles);
+  const fetchDriveFiles = async (folderUrl: string, googleToken?: string) => {
+    const url = `https://${PROJECT_ID}.supabase.co/functions/v1/list-drive-files?folderUrl=${encodeURIComponent(folderUrl)}`;
+    const headers: Record<string, string> = {
+      Authorization: `Bearer ${ANON_KEY}`,
+      apikey: ANON_KEY,
+    };
+
+    if (googleToken) {
+      headers["x-google-access-token"] = googleToken;
     }
+
+    return fetch(url, { headers });
   };
 
   // === VIEW FOTO ===
@@ -273,19 +281,28 @@ const JadwalMonitoring = () => {
     setViewFiles([]);
 
     try {
-      const url = `https://${PROJECT_ID}.supabase.co/functions/v1/list-drive-files?folderUrl=${encodeURIComponent(link)}`;
-      const res = await fetch(url, {
-        headers: {
-          'Authorization': `Bearer ${ANON_KEY}`,
-          'apikey': ANON_KEY,
-        },
-      });
+      let res = await fetchDriveFiles(link);
 
-      if (!res.ok) throw new Error(await res.text());
+      if (!res.ok) {
+        const firstError = await readErrorResponse(res);
+
+        if (firstError.code === "PLEASE_LOGIN_WITH_GOOGLE") {
+          const googleToken = await getGoogleAccessToken();
+          res = await fetchDriveFiles(link, googleToken);
+        } else {
+          throw new Error(firstError.message || "Gagal memuat daftar file");
+        }
+      }
+
+      if (!res.ok) {
+        const secondError = await readErrorResponse(res);
+        throw new Error(secondError.message || "Gagal memuat daftar file");
+      }
+
       const data = await res.json();
       setViewFiles(data.files || []);
     } catch (err: any) {
-      toast.error("Gagal memuat daftar file");
+      toast.error(err?.message || "Gagal memuat daftar file");
       console.error(err);
     } finally {
       setIsLoadingFiles(false);
@@ -602,12 +619,6 @@ const JadwalMonitoring = () => {
           multiple
           className="hidden"
           onChange={handleFileChange}
-        />
-
-        <GoogleSignInModal
-          open={showGoogleSignIn}
-          onClose={() => setShowGoogleSignIn(false)}
-          onSuccess={handleGoogleSignInSuccess}
         />
       </div>
     </TooltipProvider>
