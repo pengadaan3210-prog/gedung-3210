@@ -62,8 +62,8 @@ export function GoogleSignInModal({ open, onClose, onSuccess }: GoogleSignInModa
               token_type: response.token_type || "Bearer",
             });
             setIsLoading(false);
+            // Call onSuccess which will handle upload and close modal
             onSuccess();
-            onClose();
           }
         },
       });

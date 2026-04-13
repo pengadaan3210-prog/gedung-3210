@@ -170,9 +170,9 @@ const JadwalMonitoring = () => {
   const [uploadRow, setUploadRow] = useState<any>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState("");
-  const [pendingFiles, setPendingFiles] = useState<FileList | null>(null);
   const [showGoogleSignIn, setShowGoogleSignIn] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const pendingFilesRef = useRef<FileList | null>(null);
 
   // View files state
   const [viewRow, setViewRow] = useState<any>(null);
@@ -490,7 +490,7 @@ const JadwalMonitoring = () => {
     } else {
       // No valid token, show login modal
       console.log("📱 No valid token, showing login modal...");
-      setPendingFiles(files);
+      pendingFilesRef.current = files;
       setShowGoogleSignIn(true);
     }
     
@@ -499,9 +499,12 @@ const JadwalMonitoring = () => {
 
   const handleGoogleSignInSuccess = async () => {
     console.log("✅ Google sign-in successful, proceeding with upload...");
-    if (pendingFiles) {
-      await performUpload(pendingFiles);
+    if (pendingFilesRef.current) {
+      const filesToUpload = pendingFilesRef.current;
+      pendingFilesRef.current = null;
+      await performUpload(filesToUpload);
     }
+    setShowGoogleSignIn(false);
   };
 
   const fetchDriveFiles = async (folderUrl: string, googleToken?: string) => {
