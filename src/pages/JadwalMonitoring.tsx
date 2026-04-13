@@ -173,6 +173,7 @@ const JadwalMonitoring = () => {
   const [showGoogleSignIn, setShowGoogleSignIn] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const pendingFilesRef = useRef<FileList | null>(null);
+  const uploadRowRef = useRef<any>(null);
 
   // View files state
   const [viewRow, setViewRow] = useState<any>(null);
@@ -398,6 +399,7 @@ const JadwalMonitoring = () => {
   // === UPLOAD FOTO ===
   const handleUploadClick = (row: any) => {
     setUploadRow(row);
+    uploadRowRef.current = row;
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
       fileInputRef.current.click();
@@ -405,9 +407,15 @@ const JadwalMonitoring = () => {
   };
 
   const performUpload = async (files: FileList | null) => {
-    if (!files || files.length === 0 || !uploadRow) return;
+    if (!files || files.length === 0) return;
 
-    const rowNumber = uploadRow.__rowNumber || uploadRow.rowNumber;
+    const rowData = uploadRowRef.current || uploadRow;
+    if (!rowData) {
+      toast.error("Data baris tidak ditemukan. Silakan coba lagi.");
+      return;
+    }
+
+    const rowNumber = rowData.__rowNumber || rowData.rowNumber;
     if (!rowNumber) {
       toast.error("Tidak dapat menentukan baris untuk update.");
       return;
@@ -421,8 +429,8 @@ const JadwalMonitoring = () => {
       const userToken = await getGoogleAccessToken();
 
       const formData = new FormData();
-      formData.append("tanggal", uploadRow.tanggal);
-      formData.append("karyawan", uploadRow.karyawan);
+      formData.append("tanggal", rowData.tanggal);
+      formData.append("karyawan", rowData.karyawan);
       formData.append("rowNumber", rowNumber.toString());
       formData.append("userToken", userToken);
 
@@ -459,7 +467,7 @@ const JadwalMonitoring = () => {
       toast.success(`${result.uploadedFiles?.length || files.length} file berhasil diupload`);
       
       // Update status setelah upload berhasil
-      const updatedRow = { ...uploadRow, link_dokumen_bukti: result.folderLink };
+      const updatedRow = { ...rowData, link_dokumen_bukti: result.folderLink };
       await updateStatusInSheet(updatedRow);
       
       await refetch();
@@ -470,12 +478,14 @@ const JadwalMonitoring = () => {
       setIsUploading(false);
       setUploadProgress("");
       setUploadRow(null);
+      uploadRowRef.current = null;
+      pendingFilesRef.current = null;
     }
   };
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
-    if (!files || files.length === 0 || !uploadRow) {
+    if (!files || files.length === 0 || !uploadRowRef.current) {
       event.target.value = "";
       return;
     }
