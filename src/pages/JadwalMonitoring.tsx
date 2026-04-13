@@ -399,11 +399,17 @@ const JadwalMonitoring = () => {
 
   // === UPLOAD FOTO ===
   const handleUploadClick = (row: any) => {
+    console.log("🔘 Upload button clicked for row:", row?.no);
     setUploadRow(row);
     uploadRowRef.current = row;
+    console.log("✅ uploadRowRef.current set to:", uploadRowRef.current?.no);
+    
     if (fileInputRef.current) {
+      console.log("📁 Opening file picker...");
       fileInputRef.current.value = "";
       fileInputRef.current.click();
+    } else {
+      console.error("❌ fileInputRef.current is null!");
     }
   };
 
@@ -491,46 +497,87 @@ const JadwalMonitoring = () => {
   };
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    console.log("📄 handleFileChange called");
     const files = event.target.files;
-    event.target.value = ""; // Reset immediately
+    console.log("📂 Files count:", files?.length, "Files:", files);
     
-    if (!files || files.length === 0 || !uploadRowRef.current) {
+    // Reset immediately
+    event.target.value = "";
+    
+    // Validation
+    if (!files || files.length === 0) {
+      console.warn("⚠️ No files selected");
       return;
     }
 
-    console.log("📂 File selected, checking token...");
-    const token = getStoredGoogleToken();
-    
-    // Check if token exists and is not expired
-    if (token && !isTokenExpired(token)) {
-      console.log("✅ Valid token found, uploading directly...");
-      await performUpload(files);
-    } else {
-      // No valid token, save files and show login modal
-      console.log("📱 No valid token, showing login modal...");
-      pendingFilesRef.current = files;
-      setIsWaitingForLogin(true);
-      setShowGoogleSignIn(true);
+    console.log("✅ Files exist, uploadRowRef:", uploadRowRef.current);
+    if (!uploadRowRef.current) {
+      console.error("❌ uploadRowRef.current is null!");
+      console.error("Fallback to uploadRow state:", uploadRow);
+      
+      if (!uploadRow) {
+        toast.error("❌ Silakan klik tombol upload terlebih dahulu");
+        return;
+      }
+      // Fallback: at least state memiliki data
+      uploadRowRef.current = uploadRow;
+    }
+
+    console.log("✅ All validation passed, proceeding with token check");
+
+    try {
+      console.log("🔑 Checking stored token...");
+      const token = getStoredGoogleToken();
+      console.log("🔑 Token found:", !!token, "Is expired:", token ? isTokenExpired(token) : "N/A");
+      
+      // Check if token exists and is not expired
+      if (token && !isTokenExpired(token)) {
+        console.log("✅ Valid token found, uploading directly...");
+        await performUpload(files);
+      } else {
+        // No valid token, save files and show login modal
+        console.log("📱 No valid token, saving files and showing login modal...");
+        console.log("pendingFilesRef.current before:", pendingFilesRef.current?.length || 0);
+        pendingFilesRef.current = files;
+        console.log("pendingFilesRef.current after:", pendingFilesRef.current?.length || 0);
+        
+        setIsWaitingForLogin(true);
+        console.log("✅ isWaitingForLogin set to true");
+        
+        setShowGoogleSignIn(true);
+        console.log("✅ showGoogleSignIn set to true - modal should appear");
+      }
+    } catch (err: any) {
+      console.error("❌ Error in handleFileChange:", err);
+      toast.error(err?.message || "Terjadi error saat memproses file");
     }
   };
 
   const handleGoogleSignInSuccess = async () => {
     console.log("✅ Google sign-in successful");
+    console.log("📂 Pending files:", pendingFilesRef.current?.length || 0);
     
     try {
-      if (pendingFilesRef.current) {
-        console.log("📤 Starting upload with pending files...");
-        const filesToUpload = pendingFilesRef.current;
-        pendingFilesRef.current = null;
-        
-        // Perform upload BEFORE closing modal
-        await performUpload(filesToUpload);
-        console.log("✅ Upload completed successfully");
+      if (!pendingFilesRef.current || pendingFilesRef.current.length === 0) {
+        console.log("⚠️ No pending files found");
+        setIsWaitingForLogin(false);
+        setShowGoogleSignIn(false);
+        return;
       }
+
+      console.log("📤 Starting upload with pending files...");
+      const filesToUpload = pendingFilesRef.current;
+      pendingFilesRef.current = null;
+      
+      // Perform upload BEFORE closing modal
+      await performUpload(filesToUpload);
+      console.log("✅ Upload completed successfully");
     } catch (err: any) {
       console.error("❌ Upload failed in handleGoogleSignInSuccess:", err?.message);
+      toast.error(err?.message || "Gagal mengupload file");
     } finally {
       // Close modal and clear waiting state AFTER upload completes
+      console.log("🔄 Cleaning up and closing modal...");
       setIsWaitingForLogin(false);
       setShowGoogleSignIn(false);
     }
