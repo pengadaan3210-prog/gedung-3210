@@ -56,14 +56,21 @@ export function GoogleSignInModal({ open, onClose, onSuccess }: GoogleSignInModa
           }
 
           if (response.access_token) {
-            storeGoogleToken({
-              access_token: response.access_token,
-              expires_at: Date.now() + ((response.expires_in || 3600) * 1000),
-              token_type: response.token_type || "Bearer",
-            });
-            setIsLoading(false);
-            // Call onSuccess which will handle upload and close modal
-            onSuccess();
+            try {
+              storeGoogleToken({
+                access_token: response.access_token,
+                expires_at: Date.now() + ((response.expires_in || 3600) * 1000),
+                token_type: response.token_type || "Bearer",
+              });
+              setIsLoading(false);
+              setError("");
+              console.log("✅ Token stored, calling onSuccess...");
+              onSuccess();
+            } catch (err: any) {
+              console.error("Error storing token:", err);
+              setError("Gagal menyimpan token");
+              setIsLoading(false);
+            }
           }
         },
       });
@@ -78,8 +85,15 @@ export function GoogleSignInModal({ open, onClose, onSuccess }: GoogleSignInModa
   };
 
   return (
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
+    <Dialog open={open} onOpenChange={(newOpen) => {
+      // Prevent closing while loading
+      if (isLoading) return;
+      onClose();
+    }}>
+      <DialogContent className="sm:max-w-md" onInteractOutside={(e) => {
+        // Prevent closing by clicking outside while loading
+        if (isLoading) e.preventDefault();
+      }}>
         <DialogHeader>
           <DialogTitle>Login dengan Google</DialogTitle>
           <DialogDescription>
@@ -101,11 +115,11 @@ export function GoogleSignInModal({ open, onClose, onSuccess }: GoogleSignInModa
             size="lg"
           >
             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {isLoading ? "Loading..." : "Login dengan Google"}
+            {isLoading ? "Sedang Login..." : "Login dengan Google"}
           </Button>
 
           <p className="text-xs text-muted-foreground text-center">
-            Popup mungkin muncul di atas jendela ini. Silakan check browser anda.
+            {isLoading ? "Tunggu popup login dari Google..." : "Popup mungkin muncul di atas jendela ini. Silakan check browser anda."}
           </p>
         </div>
       </DialogContent>

@@ -171,6 +171,7 @@ const JadwalMonitoring = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState("");
   const [showGoogleSignIn, setShowGoogleSignIn] = useState(false);
+  const [isWaitingForLogin, setIsWaitingForLogin] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const pendingFilesRef = useRef<FileList | null>(null);
   const uploadRowRef = useRef<any>(null);
@@ -407,20 +408,26 @@ const JadwalMonitoring = () => {
   };
 
   const performUpload = async (files: FileList | null) => {
-    if (!files || files.length === 0) return;
+    if (!files || files.length === 0) {
+      console.log("❌ No files to upload");
+      return;
+    }
 
     const rowData = uploadRowRef.current || uploadRow;
     if (!rowData) {
+      console.log("❌ Row data not found");
       toast.error("Data baris tidak ditemukan. Silakan coba lagi.");
       return;
     }
 
     const rowNumber = rowData.__rowNumber || rowData.rowNumber;
     if (!rowNumber) {
+      console.log("❌ Row number not found");
       toast.error("Tidak dapat menentukan baris untuk update.");
       return;
     }
 
+    console.log(`📤 Starting upload for ${files.length} files to row ${rowNumber}`);
     setIsUploading(true);
     setUploadProgress(`Menyiapkan upload ${files.length} file...`);
 
@@ -485,8 +492,9 @@ const JadwalMonitoring = () => {
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
+    event.target.value = ""; // Reset immediately
+    
     if (!files || files.length === 0 || !uploadRowRef.current) {
-      event.target.value = "";
       return;
     }
 
@@ -498,23 +506,34 @@ const JadwalMonitoring = () => {
       console.log("✅ Valid token found, uploading directly...");
       await performUpload(files);
     } else {
-      // No valid token, show login modal
+      // No valid token, save files and show login modal
       console.log("📱 No valid token, showing login modal...");
       pendingFilesRef.current = files;
+      setIsWaitingForLogin(true);
       setShowGoogleSignIn(true);
     }
-    
-    event.target.value = "";
   };
 
   const handleGoogleSignInSuccess = async () => {
-    console.log("✅ Google sign-in successful, proceeding with upload...");
-    if (pendingFilesRef.current) {
-      const filesToUpload = pendingFilesRef.current;
-      pendingFilesRef.current = null;
-      await performUpload(filesToUpload);
+    console.log("✅ Google sign-in successful");
+    
+    try {
+      if (pendingFilesRef.current) {
+        console.log("📤 Starting upload with pending files...");
+        const filesToUpload = pendingFilesRef.current;
+        pendingFilesRef.current = null;
+        
+        // Perform upload BEFORE closing modal
+        await performUpload(filesToUpload);
+        console.log("✅ Upload completed successfully");
+      }
+    } catch (err: any) {
+      console.error("❌ Upload failed in handleGoogleSignInSuccess:", err?.message);
+    } finally {
+      // Close modal and clear waiting state AFTER upload completes
+      setIsWaitingForLogin(false);
+      setShowGoogleSignIn(false);
     }
-    setShowGoogleSignIn(false);
   };
 
   const fetchDriveFiles = async (folderUrl: string, googleToken?: string) => {
