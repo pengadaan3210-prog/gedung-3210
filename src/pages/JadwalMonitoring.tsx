@@ -498,17 +498,29 @@ const JadwalMonitoring = () => {
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     console.log("📄 handleFileChange called");
-    const files = event.target.files;
+    const inputElement = event.target as HTMLInputElement;
+    const files = inputElement.files;
     console.log("📂 Files count:", files?.length, "Files:", files);
     
-    // Reset immediately
-    event.target.value = "";
-    
-    // Validation
+    // Validation FIRST (before resetting)
     if (!files || files.length === 0) {
       console.warn("⚠️ No files selected");
+      inputElement.value = "";
       return;
     }
+    
+    // Make a copy of files immediately
+    const filesCopy: File[] = [];
+    for (let i = 0; i < files.length; i++) {
+      filesCopy.push(files[i]);
+    }
+    console.log("✅ Files copied successfully:", filesCopy.length);
+    
+    // Convert back to FileList-like object for FormData
+    const dataTransfer = new DataTransfer();
+    filesCopy.forEach(file => dataTransfer.items.add(file));
+    const fileList = dataTransfer.files;
+    console.log("✅ FileList created:", fileList.length);
 
     console.log("✅ Files exist, uploadRowRef:", uploadRowRef.current);
     if (!uploadRowRef.current) {
@@ -533,12 +545,12 @@ const JadwalMonitoring = () => {
       // Check if token exists and is not expired
       if (token && !isTokenExpired(token)) {
         console.log("✅ Valid token found, uploading directly...");
-        await performUpload(files);
+        await performUpload(fileList);
       } else {
         // No valid token, save files and show login modal
         console.log("📱 No valid token, saving files and showing login modal...");
         console.log("pendingFilesRef.current before:", pendingFilesRef.current?.length || 0);
-        pendingFilesRef.current = files;
+        pendingFilesRef.current = fileList;
         console.log("pendingFilesRef.current after:", pendingFilesRef.current?.length || 0);
         
         setIsWaitingForLogin(true);
@@ -550,6 +562,10 @@ const JadwalMonitoring = () => {
     } catch (err: any) {
       console.error("❌ Error in handleFileChange:", err);
       toast.error(err?.message || "Terjadi error saat memproses file");
+    } finally {
+      // Reset input value at the end
+      inputElement.value = "";
+      console.log("✅ Input value reset");
     }
   };
 
