@@ -43,6 +43,13 @@ async function ensureGoogleLibLoaded(): Promise<void> {
 }
 
 /**
+ * Initialize Google Auth library (preload script)
+ */
+export async function initializeGoogleAuth(): Promise<void> {
+  await ensureGoogleLibLoaded();
+}
+
+/**
  * Request access token from Google OAuth (loads library on-demand)
  */
 export async function requestGoogleAccessToken(): Promise<GoogleAuthToken> {
