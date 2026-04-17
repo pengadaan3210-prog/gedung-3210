@@ -150,7 +150,9 @@ export default function KurvaS() {
               ? "text-blue-600"
               : entry.dataKey === "realisasi"
                 ? "text-orange-600"
-                : "text-gray-700";
+                : entry.dataKey === "realisasiPelaksana"
+                  ? "text-purple-600"
+                  : "text-gray-700";
             return (
               <div key={entry.dataKey} className="flex justify-between gap-2">
                 <span className="font-medium">{entry.name}</span>
