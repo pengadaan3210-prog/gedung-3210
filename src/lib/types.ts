@@ -136,6 +136,8 @@ export interface KurvaSRealisasi {
   deskripsiPekerjaanMinggu: string;
   realisasiPersentaseMinggu: number;
   realisasiPersentaseKumulatif: number;
+  realisasiPersentaseMingguPelaksana: number;
+  realisasiPersentaseKumulatifPelaksana: number;
   kendala: string;
   solusi: string;
   pic: string;

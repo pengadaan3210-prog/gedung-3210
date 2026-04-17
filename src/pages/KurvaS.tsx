@@ -88,6 +88,7 @@ export default function KurvaS() {
         minggu: p.mingguke,
         planning: p.targetPersentaseKumulatif,
         realisasi: r?.realisasiPersentaseKumulatif || 0,
+        realisasiPelaksana: r?.realisasiPersentaseKumulatifPelaksana || 0,
         deviasi: (r?.realisasiPersentaseKumulatif || 0) - p.targetPersentaseKumulatif,
         tanggalAwal: p.tanggalAwal ? formatDateIndo(p.tanggalAwal) : "-",
         tanggalAkhir: p.tanggalAkhir ? formatDateIndo(p.tanggalAkhir) : "-",
@@ -149,7 +150,9 @@ export default function KurvaS() {
               ? "text-blue-600"
               : entry.dataKey === "realisasi"
                 ? "text-orange-600"
-                : "text-gray-700";
+                : entry.dataKey === "realisasiPelaksana"
+                  ? "text-purple-600"
+                  : "text-gray-700";
             return (
               <div key={entry.dataKey} className="flex justify-between gap-2">
                 <span className="font-medium">{entry.name}</span>
@@ -339,7 +342,15 @@ export default function KurvaS() {
                 stroke="#f97316"
                 strokeWidth={2}
                 dot={false}
-                name="Realisasi"
+                name="Realisasi (Pengawas)"
+              />
+              <Line
+                type="monotone"
+                dataKey="realisasiPelaksana"
+                stroke="#9333ea"
+                strokeWidth={2}
+                dot={false}
+                name="Realisasi (Pelaksana)"
               />
             </LineChart>
           </ResponsiveContainer>

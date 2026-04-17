@@ -340,6 +340,8 @@ function mapKurvaSRealisasi(raw: Record<string, string>[]) {
     deskripsiPekerjaanMinggu: r.deskripsi_pekerjaan_minggu || r.deskripsi || '',
     realisasiPersentaseMinggu: parseFloat(r.realisasi_persentase_minggu || r.realisasi_persen_minggu || '0') || 0,
     realisasiPersentaseKumulatif: parseFloat(r.realisasi_persentase_kumulatif || r.realisasi_kumulatif || '0') || 0,
+    realisasiPersentaseMingguPelaksana: parseFloat(r.realisasi_persentase_minggu_pelaksana || r.realisasi_persen_minggu_pelaksana || r.realisasi_minggu_pelaksana || '0') || 0,
+    realisasiPersentaseKumulatifPelaksana: parseFloat(r.realisasi_persentase_kumulatif_pelaksana || r.realisasi_kumulatif_pelaksana || '0') || 0,
     kendala: r.kendala || '-',
     solusi: r.solusi || '-',
     pic: r.pic || '',
