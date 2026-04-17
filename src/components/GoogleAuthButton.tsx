@@ -11,30 +11,12 @@ export function GoogleAuthButton() {
 
   // Initialize Google Auth on mount
   useEffect(() => {
-    let isMounted = true;
-    
-    initializeGoogleAuth()
-      .then(() => {
-        if (isMounted) {
-          setIsInitialized(true);
-          // Check if already logged in
-          const token = getStoredGoogleToken();
-          if (token) {
-            console.log("✅ Found stored Google token");
-            setIsLoggedIn(true);
-          }
-        }
-      })
-      .catch((err) => {
-        console.error("❌ Failed to initialize Google Auth:", err);
-        if (isMounted) {
-          setErrorMsg("Google Auth library failed to load");
-        }
-      });
-
-    return () => {
-      isMounted = false;
-    };
+    setIsInitialized(true);
+    const token = getStoredGoogleToken();
+    if (token) {
+      console.log("✅ Found stored Google token");
+      setIsLoggedIn(true);
+    }
   }, []);
 
   const handleLogin = async () => {
