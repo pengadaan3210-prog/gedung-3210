@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { initializeGoogleAuth, requestGoogleAccessToken, storeGoogleToken, getStoredGoogleToken, clearGoogleToken } from "@/integrations/google/oauth";
+import { requestGoogleAccessToken, storeGoogleToken, getStoredGoogleToken, clearGoogleToken } from "@/integrations/google/oauth";
 import { LogIn, LogOut } from "lucide-react";
 
 export function GoogleAuthButton() {
