@@ -342,7 +342,15 @@ export default function KurvaS() {
                 stroke="#f97316"
                 strokeWidth={2}
                 dot={false}
-                name="Realisasi"
+                name="Realisasi (Pengawas)"
+              />
+              <Line
+                type="monotone"
+                dataKey="realisasiPelaksana"
+                stroke="#9333ea"
+                strokeWidth={2}
+                dot={false}
+                name="Realisasi (Pelaksana)"
               />
             </LineChart>
           </ResponsiveContainer>
