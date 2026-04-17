@@ -88,6 +88,7 @@ export default function KurvaS() {
         minggu: p.mingguke,
         planning: p.targetPersentaseKumulatif,
         realisasi: r?.realisasiPersentaseKumulatif || 0,
+        realisasiPelaksana: r?.realisasiPersentaseKumulatifPelaksana || 0,
         deviasi: (r?.realisasiPersentaseKumulatif || 0) - p.targetPersentaseKumulatif,
         tanggalAwal: p.tanggalAwal ? formatDateIndo(p.tanggalAwal) : "-",
         tanggalAkhir: p.tanggalAkhir ? formatDateIndo(p.tanggalAkhir) : "-",
