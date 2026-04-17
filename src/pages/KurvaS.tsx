@@ -375,8 +375,8 @@ export default function KurvaS() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>Detail Progres Mingguan</CardTitle>
-              <CardDescription>Analisis mendalam per minggu dengan deviasi dan kendala</CardDescription>
+              <CardTitle>Detail Progres Mingguan (Pengawas)</CardTitle>
+              <CardDescription>Analisis mendalam per minggu berdasarkan hitungan Pengawas</CardDescription>
             </div>
             <button
               onClick={() => setSortBy(sortBy === "minggu" ? "deviasi" : "minggu")}
