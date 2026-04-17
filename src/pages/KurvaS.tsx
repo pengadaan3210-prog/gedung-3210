@@ -483,6 +483,87 @@ export default function KurvaS() {
         </CardContent>
       </Card>
 
+      {/* Detail Progres Mingguan (Pelaksana) */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Detail Progres Mingguan (Pelaksana)</CardTitle>
+          <CardDescription>Analisis mendalam per minggu berdasarkan hitungan Kontraktor Pelaksana</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-12">Mgg</TableHead>
+                  <TableHead>Tahapan / Pekerjaan</TableHead>
+                  <TableHead className="text-center">Plan %</TableHead>
+                  <TableHead className="text-center">Real %</TableHead>
+                  <TableHead className="text-center">Kum Plan</TableHead>
+                  <TableHead className="text-center">Kum Real</TableHead>
+                  <TableHead className="text-center">Deviasi</TableHead>
+                  <TableHead>Status</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {sortedDetail.map((row) => (
+                  <TableRow key={row.minggu}>
+                    <TableCell className="font-medium">{row.minggu}</TableCell>
+                    <TableCell>
+                      <div className="space-y-1">
+                        <div className="text-sm font-medium">{row.pekerjaan || row.deskripsi}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {row.tanggalAwal && row.tanggalAkhir
+                            ? `${formatDateIndo(row.tanggalAwal)} sd ${formatDateIndo(row.tanggalAkhir)}`
+                            : "-"}
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-center text-sm">{row.plan_persen.toFixed(1)}%</TableCell>
+                    <TableCell className="text-center text-sm">{row.real_persen_pelaksana.toFixed(1)}%</TableCell>
+                    <TableCell className="text-center text-sm font-medium">{row.plan_kumulatif.toFixed(1)}%</TableCell>
+                    <TableCell className="text-center text-sm font-medium text-purple-700">{row.real_kumulatif_pelaksana.toFixed(1)}%</TableCell>
+                    <TableCell className="text-center">
+                      <span
+                        className={`text-sm font-medium ${
+                          row.deviation_pelaksana > 0
+                            ? "text-green-600"
+                            : row.deviation_pelaksana < 0
+                              ? "text-red-600"
+                              : "text-gray-600"
+                        }`}
+                      >
+                        {row.deviation_pelaksana > 0 ? "+" : ""}
+                        {row.deviation_pelaksana.toFixed(2)}%
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={
+                          row.status_pelaksana === "On track"
+                            ? "outline"
+                            : row.status_pelaksana === "Diatas Target"
+                              ? "secondary"
+                              : "destructive"
+                        }
+                        className={
+                          row.status_pelaksana === "On track"
+                            ? "bg-blue-50 text-blue-700 border-blue-200"
+                            : row.status_pelaksana === "Diatas Target"
+                              ? "bg-green-50 text-green-700 border-green-200"
+                              : "bg-red-50 text-red-700 border-red-200"
+                        }
+                      >
+                        {row.status_pelaksana}
+                      </Badge>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Realisasi Details Table */}
       <Card>
         <CardHeader>
