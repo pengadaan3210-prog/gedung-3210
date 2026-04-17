@@ -108,14 +108,27 @@ export default function KurvaS() {
             ? "Dibawah Target"
             : "On track";
 
+      const real_kum_pel = r?.realisasiPersentaseKumulatifPelaksana || 0;
+      const deviation_pelaksana = real_kum_pel - p.targetPersentaseKumulatif;
+      const status_pelaksana =
+        deviation_pelaksana > 2
+          ? "Diatas Target"
+          : deviation_pelaksana < -2
+            ? "Dibawah Target"
+            : "On track";
+
       return {
         minggu: p.mingguke,
         plan_persen: p.targetPersentaseMinggu || 0,
         plan_kumulatif: p.targetPersentaseKumulatif,
         real_persen: r?.realisasiPersentaseMinggu || 0,
         real_kumulatif: r?.realisasiPersentaseKumulatif || 0,
+        real_persen_pelaksana: r?.realisasiPersentaseMingguPelaksana || 0,
+        real_kumulatif_pelaksana: real_kum_pel,
         deviation,
+        deviation_pelaksana,
         status,
+        status_pelaksana,
         deskripsi: p.deskripsiTahapan,
         pekerjaan: r?.deskripsiPekerjaanMinggu || "-",
         tanggalAwal: p.tanggalAwal || "",
