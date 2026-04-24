@@ -542,18 +542,22 @@ export default function KurvaS() {
                     <TableCell className="text-center text-sm font-medium">{row.plan_kumulatif.toFixed(1)}%</TableCell>
                     <TableCell className="text-center text-sm font-medium text-purple-700">{row.real_kumulatif_pelaksana.toFixed(1)}%</TableCell>
                     <TableCell className="text-center">
-                      <span
-                        className={`text-sm font-medium ${
-                          row.deviation_pelaksana > 0
-                            ? "text-green-600"
-                            : row.deviation_pelaksana < 0
-                              ? "text-red-600"
-                              : "text-gray-600"
-                        }`}
-                      >
-                        {row.deviation_pelaksana > 0 ? "+" : ""}
-                        {row.deviation_pelaksana.toFixed(2)}%
-                      </span>
+                      {row.hasRealisasiPelaksana ? (
+                        <span
+                          className={`text-sm font-medium ${
+                            row.deviation_pelaksana > 0
+                              ? "text-green-600"
+                              : row.deviation_pelaksana < 0
+                                ? "text-red-600"
+                                : "text-gray-600"
+                          }`}
+                        >
+                          {row.deviation_pelaksana > 0 ? "+" : ""}
+                          {row.deviation_pelaksana.toFixed(2)}%
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground text-sm">-</span>
+                      )}
                     </TableCell>
                     <TableCell>
                       <Badge
