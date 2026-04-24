@@ -142,15 +142,20 @@ export default function KurvaS() {
         tanggalAkhir: p.tanggalAkhir ? formatDateIndo(p.tanggalAkhir) : "-",
       };
     });
-  }, [planning, realisasi]);
+  }, [planning, realisasi, today]);
 
   // Detail tabel dengan deviasi
   const detailData = useMemo(() => {
     return planning.map((p) => {
       const r = realisasi.find((r) => r.mingguke === p.mingguke);
 
+      // Periode minggu sudah dimulai jika tanggalAwal <= hari ini
+      const startDate = parseDate(p.tanggalAwal);
+      const periodStarted = startDate ? startDate <= today : true;
+
       // Determine if realisasi data exists for this week (pengawas)
       const hasRealisasiPengawas =
+        periodStarted &&
         r !== undefined &&
         (r.realisasiPersentaseMinggu !== undefined && r.realisasiPersentaseMinggu !== null && (r.realisasiPersentaseMinggu as any) !== "" ||
           r.realisasiPersentaseKumulatif !== undefined && r.realisasiPersentaseKumulatif !== null && (r.realisasiPersentaseKumulatif as any) !== "") &&
@@ -158,6 +163,7 @@ export default function KurvaS() {
 
       // Determine if realisasi data exists for this week (pelaksana)
       const hasRealisasiPelaksana =
+        periodStarted &&
         r !== undefined &&
         ((r.realisasiPersentaseMingguPelaksana || 0) > 0 || (r.realisasiPersentaseKumulatifPelaksana || 0) > 0);
 
@@ -201,7 +207,7 @@ export default function KurvaS() {
         pic: r?.pic || "-",
       };
     });
-  }, [planning, realisasi]);
+  }, [planning, realisasi, today]);
 
   const sortedDetail = useMemo(() => {
     if (sortBy === "deviasi") {
