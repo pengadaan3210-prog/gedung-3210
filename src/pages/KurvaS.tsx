@@ -100,6 +100,19 @@ export default function KurvaS() {
   const detailData = useMemo(() => {
     return planning.map((p) => {
       const r = realisasi.find((r) => r.mingguke === p.mingguke);
+
+      // Determine if realisasi data exists for this week (pengawas)
+      const hasRealisasiPengawas =
+        r !== undefined &&
+        (r.realisasiPersentaseMinggu !== undefined && r.realisasiPersentaseMinggu !== null && (r.realisasiPersentaseMinggu as any) !== "" ||
+          r.realisasiPersentaseKumulatif !== undefined && r.realisasiPersentaseKumulatif !== null && (r.realisasiPersentaseKumulatif as any) !== "") &&
+        ((r.realisasiPersentaseMinggu || 0) > 0 || (r.realisasiPersentaseKumulatif || 0) > 0);
+
+      // Determine if realisasi data exists for this week (pelaksana)
+      const hasRealisasiPelaksana =
+        r !== undefined &&
+        ((r.realisasiPersentaseMingguPelaksana || 0) > 0 || (r.realisasiPersentaseKumulatifPelaksana || 0) > 0);
+
       const deviation = (r?.realisasiPersentaseKumulatif || 0) - p.targetPersentaseKumulatif;
       const status =
         deviation > 2
@@ -125,6 +138,8 @@ export default function KurvaS() {
         real_kumulatif: r?.realisasiPersentaseKumulatif || 0,
         real_persen_pelaksana: r?.realisasiPersentaseMingguPelaksana || 0,
         real_kumulatif_pelaksana: real_kum_pel,
+        hasRealisasiPengawas,
+        hasRealisasiPelaksana,
         deviation,
         deviation_pelaksana,
         status,
