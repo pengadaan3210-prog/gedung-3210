@@ -84,11 +84,20 @@ export default function KurvaS() {
   const chartData = useMemo(() => {
     return planning.map((p) => {
       const r = realisasi.find((r) => r.mingguke === p.mingguke);
+
+      const hasPengawas =
+        r !== undefined &&
+        ((r.realisasiPersentaseMinggu || 0) > 0 || (r.realisasiPersentaseKumulatif || 0) > 0);
+
+      const hasPelaksana =
+        r !== undefined &&
+        ((r.realisasiPersentaseMingguPelaksana || 0) > 0 || (r.realisasiPersentaseKumulatifPelaksana || 0) > 0);
+
       return {
         minggu: p.mingguke,
         planning: p.targetPersentaseKumulatif,
-        realisasi: r?.realisasiPersentaseKumulatif || 0,
-        realisasiPelaksana: r?.realisasiPersentaseKumulatifPelaksana || 0,
+        realisasi: hasPengawas ? (r?.realisasiPersentaseKumulatif || 0) : null,
+        realisasiPelaksana: hasPelaksana ? (r?.realisasiPersentaseKumulatifPelaksana || 0) : null,
         deviasi: (r?.realisasiPersentaseKumulatif || 0) - p.targetPersentaseKumulatif,
         tanggalAwal: p.tanggalAwal ? formatDateIndo(p.tanggalAwal) : "-",
         tanggalAkhir: p.tanggalAkhir ? formatDateIndo(p.tanggalAkhir) : "-",
