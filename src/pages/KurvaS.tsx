@@ -81,15 +81,54 @@ export default function KurvaS() {
     return `${dd}/${mm}/${yyyy}`;
   };
 
+  // Parse berbagai format tanggal ke Date object
+  const parseDate = (dateInput: string): Date | null => {
+    if (!dateInput || dateInput === "-") return null;
+    const isoDash = dateInput.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (isoDash) {
+      const [, yyyy, part2, part3] = isoDash;
+      const p2 = Number(part2);
+      const p3 = Number(part3);
+      if (p2 > 12 && p3 <= 12) {
+        return new Date(Number(yyyy), p3 - 1, p2);
+      }
+      if (p2 >= 1 && p2 <= 12 && p3 >= 1 && p3 <= 31) {
+        return new Date(Number(yyyy), p2 - 1, p3);
+      }
+    }
+    const slash = dateInput.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+    if (slash) {
+      const dd = Number(slash[1]);
+      const mm = Number(slash[2]);
+      const yyyy = Number(slash[3]);
+      return new Date(yyyy, mm - 1, dd);
+    }
+    const d = new Date(dateInput);
+    return Number.isNaN(d.getTime()) ? null : d;
+  };
+
+  // "Hari ini" - normalisasi ke awal hari
+  const today = useMemo(() => {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }, []);
+
   const chartData = useMemo(() => {
     return planning.map((p) => {
       const r = realisasi.find((r) => r.mingguke === p.mingguke);
 
+      // Periode minggu sudah dimulai jika tanggalAwal <= hari ini
+      const startDate = parseDate(p.tanggalAwal);
+      const periodStarted = startDate ? startDate <= today : true;
+
       const hasPengawas =
+        periodStarted &&
         r !== undefined &&
         ((r.realisasiPersentaseMinggu || 0) > 0 || (r.realisasiPersentaseKumulatif || 0) > 0);
 
       const hasPelaksana =
+        periodStarted &&
         r !== undefined &&
         ((r.realisasiPersentaseMingguPelaksana || 0) > 0 || (r.realisasiPersentaseKumulatifPelaksana || 0) > 0);
 
@@ -103,15 +142,20 @@ export default function KurvaS() {
         tanggalAkhir: p.tanggalAkhir ? formatDateIndo(p.tanggalAkhir) : "-",
       };
     });
-  }, [planning, realisasi]);
+  }, [planning, realisasi, today]);
 
   // Detail tabel dengan deviasi
   const detailData = useMemo(() => {
     return planning.map((p) => {
       const r = realisasi.find((r) => r.mingguke === p.mingguke);
 
+      // Periode minggu sudah dimulai jika tanggalAwal <= hari ini
+      const startDate = parseDate(p.tanggalAwal);
+      const periodStarted = startDate ? startDate <= today : true;
+
       // Determine if realisasi data exists for this week (pengawas)
       const hasRealisasiPengawas =
+        periodStarted &&
         r !== undefined &&
         (r.realisasiPersentaseMinggu !== undefined && r.realisasiPersentaseMinggu !== null && (r.realisasiPersentaseMinggu as any) !== "" ||
           r.realisasiPersentaseKumulatif !== undefined && r.realisasiPersentaseKumulatif !== null && (r.realisasiPersentaseKumulatif as any) !== "") &&
@@ -119,6 +163,7 @@ export default function KurvaS() {
 
       // Determine if realisasi data exists for this week (pelaksana)
       const hasRealisasiPelaksana =
+        periodStarted &&
         r !== undefined &&
         ((r.realisasiPersentaseMingguPelaksana || 0) > 0 || (r.realisasiPersentaseKumulatifPelaksana || 0) > 0);
 
@@ -162,7 +207,7 @@ export default function KurvaS() {
         pic: r?.pic || "-",
       };
     });
-  }, [planning, realisasi]);
+  }, [planning, realisasi, today]);
 
   const sortedDetail = useMemo(() => {
     if (sortBy === "deviasi") {
