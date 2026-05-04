@@ -4,6 +4,7 @@ import ErrorState from "@/components/ErrorState";
 import { ExternalLink, ChevronLeft, ChevronRight, Mail } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
+import { isGoogleDriveUrl, getGoogleDriveImageUrl } from "@/lib/utils";
 
 const formatTanggalID = (iso: string) => {
   if (!iso) return "";
@@ -81,7 +82,12 @@ const SuratPage = () => {
         </p>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          {paginated.map((item: any) => (
+          {paginated.map((item: any) => {
+            const link = item.linkSurat;
+            const thumbnailUrl = link && (isGoogleDriveUrl(link)
+              ? getGoogleDriveImageUrl(link)
+              : /\.(jpe?g|png|webp|gif|svg)$/i.test(link) ? link : null);
+            return (
             <a
               key={item.id}
               href={item.linkSurat || "#"}
@@ -90,9 +96,18 @@ const SuratPage = () => {
               className="group block rounded-xl bg-card border border-border/40 overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:border-primary/30"
             >
               <div className="relative w-full aspect-[16/10] bg-muted overflow-hidden">
-                <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-muted to-muted/60">
-                  <Mail className="h-10 w-10 text-muted-foreground/30" />
-                </div>
+                {thumbnailUrl ? (
+                  <img
+                    src={thumbnailUrl}
+                    alt={item.judulSurat}
+                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-muted to-muted/60">
+                    <Mail className="h-10 w-10 text-muted-foreground/30" />
+                  </div>
+                )}
                 <div className="absolute inset-0 bg-primary/0 group-hover:bg-primary/10 transition-colors duration-300 flex items-center justify-center">
                   <ExternalLink className="h-6 w-6 text-primary-foreground opacity-0 group-hover:opacity-80 transition-opacity duration-300 drop-shadow-lg" />
                 </div>
@@ -111,7 +126,8 @@ const SuratPage = () => {
                 )}
               </div>
             </a>
-          ))}
+            );
+          })}
         </div>
       )}
 
