@@ -317,6 +317,25 @@ function mapFotoProgres(raw: Record<string, string>[]) {
   });
 }
 
+function mapLaporan(raw: Record<string, string>[]) {
+  return raw.map((r) => ({
+    id: r.id || '',
+    judulLaporan: r.judul_laporan || '',
+    tahapan: r.tahapan || '',
+    linkLaporan: r.link_laporan || '',
+  }));
+}
+
+function mapSurat(raw: Record<string, string>[]) {
+  return raw.map((r) => ({
+    id: r.id || '',
+    nomorSurat: r.nomor_surat || '',
+    judulSurat: r.judul_surat || '',
+    tanggalSurat: parseDate(r.tanggal_surat),
+    linkSurat: r.link_surat || '',
+  }));
+}
+
 function mapKurvaSPlanning(raw: Record<string, string>[]) {
   return raw.map((r) => ({
     id: r.id || '',
@@ -394,7 +413,7 @@ serve(async (req) => {
     const sheetsParam = url.searchParams.get('sheets');
     const requestedSheets = sheetsParam
       ? sheetsParam.split(',')
-      : ['Kegiatan', 'Visualisasi', 'Dokumentasi', 'Notulen', 'Foto_Progres', 'Stakeholder', 'Mitigasi', 'Kurva_S_Planning', 'Kurva_S_Realisasi'];
+      : ['Kegiatan', 'Visualisasi', 'Dokumentasi', 'Notulen', 'Foto_Progres', 'Stakeholder', 'Mitigasi', 'Kurva_S_Planning', 'Kurva_S_Realisasi', 'Laporan', 'Surat'];
 
     console.log(`📊 Requesting ${requestedSheets.length} sheets: ${requestedSheets.join(', ')}`);
 
@@ -446,6 +465,14 @@ serve(async (req) => {
           }
           result.kurvaSRealisasi = mapKurvaSRealisasi(objects);
           console.log(`   → Kurva S Realisasi: ${result.kurvaSRealisasi.length} records mapped`);
+          break;
+        case 'Laporan':
+          result.laporan = mapLaporan(objects);
+          console.log(`   → Laporan: ${objects.length} records mapped`);
+          break;
+        case 'Surat':
+          result.surat = mapSurat(objects);
+          console.log(`   → Surat: ${objects.length} records mapped`);
           break;
         default: 
           result[sheet] = objects;

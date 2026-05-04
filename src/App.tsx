@@ -15,6 +15,7 @@ import StakeholderPage from "@/pages/StakeholderPage";
 import MitigasiPage from "@/pages/MitigasiPage";
 import KurvaS from "@/pages/KurvaS";
 import JadwalMonitoring from "@/pages/JadwalMonitoring";
+import SuratPage from "@/pages/SuratPage";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -87,6 +88,7 @@ const App = () => (
             <Route path="/laporan" element={<Laporan />} />
             <Route path="/kurva-s" element={<KurvaS />} />
             <Route path="/jadwal-monitoring" element={<JadwalMonitoring />} />
+            <Route path="/surat" element={<SuratPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AppLayout>

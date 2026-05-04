@@ -146,6 +146,21 @@ export interface KurvaSRealisasi {
   linkLaporanMingguanPelaksana: string;
 }
 
+export interface Laporan {
+  id: string;
+  judulLaporan: string;
+  tahapan: string;
+  linkLaporan: string;
+}
+
+export interface Surat {
+  id: string;
+  nomorSurat: string;
+  judulSurat: string;
+  tanggalSurat: string;
+  linkSurat: string;
+}
+
 export interface SheetsData {
   kegiatan?: Kegiatan[];
   visualisasi?: Visualisasi[];
@@ -157,4 +172,6 @@ export interface SheetsData {
   mitigasi?: Mitigasi[];
   kurvaSPlanning?: KurvaSPlanning[];
   kurvaSRealisasi?: KurvaSRealisasi[];
+  laporan?: Laporan[];
+  surat?: Surat[];
 }
