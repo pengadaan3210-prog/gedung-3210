@@ -13,6 +13,7 @@ import {
   TrendingUp,
   Building2,
   Calendar,
+  Mail,
 } from "lucide-react";
 import {
   Sidebar,
@@ -58,6 +59,7 @@ const supportMenu = [
   { title: "Notulen Rapat", url: "/notulen", icon: BookOpen },
   { title: "Foto Progres", url: "/foto-progres", icon: Camera },
   { title: "Laporan", url: "/laporan", icon: FileBarChart },
+  { title: "Surat", url: "/surat", icon: Mail },
 ];
 
 export function AppSidebar() {
