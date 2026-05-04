@@ -106,6 +106,16 @@ export function useMitigasi() {
   return { data: data?.mitigasi || [], ...rest };
 }
 
+export function useLaporan() {
+  const { data, ...rest } = useSheetsData(["Laporan"]);
+  return { data: data?.laporan || [], ...rest };
+}
+
+export function useSurat() {
+  const { data, ...rest } = useSheetsData(["Surat"]);
+  return { data: data?.surat || [], ...rest };
+}
+
 export function useAllSheetsData() {
   return useSheetsData();
 }
