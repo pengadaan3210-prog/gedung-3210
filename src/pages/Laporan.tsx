@@ -7,6 +7,15 @@ import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { isGoogleDriveUrl, getGoogleDriveImageUrl } from "@/lib/utils";
 
+const formatTanggalID = (iso: string) => {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return iso;
+  const dd = String(d.getDate()).padStart(2, "0");
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  return `${dd}/${mm}/${d.getFullYear()}`;
+};
+
 const Laporan = () => {
   const { data, isLoading, isError, refetch } = useLaporan();
   const [search, setSearch] = useState("");
@@ -16,7 +25,13 @@ const Laporan = () => {
   if (isLoading) return <div className="p-6"><LoadingState /></div>;
   if (isError) return <div className="p-6"><ErrorState onRetry={() => refetch()} /></div>;
 
-  const filtered = (data || []).filter((d: any) => {
+  const sorted = [...(data || [])].sort((a: any, b: any) => {
+    const da = a.tanggalLaporan ? new Date(a.tanggalLaporan).getTime() : 0;
+    const db = b.tanggalLaporan ? new Date(b.tanggalLaporan).getTime() : 0;
+    return db - da;
+  });
+
+  const filtered = sorted.filter((d: any) => {
     if (!search) return true;
     const s = search.toLowerCase();
     return (

@@ -82,11 +82,11 @@ const SuratPage = () => {
             ) : (
               paginated.map((item: any, idx: number) => (
                 <TableRow key={item.id}>
-                  <TableCell className="text-sm text-muted-foreground">{startIndex + idx + 1}</TableCell>
+                  <TableCell className="text-sm text-muted-foreground whitespace-nowrap">{startIndex + idx + 1}</TableCell>
                   <TableCell className="text-sm whitespace-nowrap">{formatTanggalID(item.tanggalSurat)}</TableCell>
-                  <TableCell className="text-sm font-mono">{item.nomorSurat || "-"}</TableCell>
-                  <TableCell className="text-sm">{item.judulSurat || "-"}</TableCell>
-                  <TableCell className="text-center">
+                  <TableCell className="text-sm font-mono whitespace-nowrap">{item.nomorSurat || "-"}</TableCell>
+                  <TableCell className="text-sm break-words">{item.judulSurat || "-"}</TableCell>
+                  <TableCell className="text-center whitespace-nowrap">
                     {item.linkSurat ? (
                       <a href={item.linkSurat} target="_blank" rel="noopener noreferrer">
                         <Button size="sm" variant="outline" className="gap-1">
