@@ -323,6 +323,7 @@ function mapLaporan(raw: Record<string, string>[]) {
     judulLaporan: r.judul_laporan || '',
     tahapan: r.tahapan || '',
     linkLaporan: r.link_laporan || '',
+    tanggalLaporan: parseDate(r.tanggal_laporan),
   }));
 }
 

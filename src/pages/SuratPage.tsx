@@ -65,11 +65,11 @@ const SuratPage = () => {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-14">No</TableHead>
-              <TableHead className="w-32">Tanggal</TableHead>
-              <TableHead className="w-48">Nomor Surat</TableHead>
+              <TableHead className="whitespace-nowrap">No</TableHead>
+              <TableHead className="whitespace-nowrap">Tanggal</TableHead>
+              <TableHead className="whitespace-nowrap">Nomor Surat</TableHead>
               <TableHead>Judul Surat</TableHead>
-              <TableHead className="w-24 text-center">Aksi</TableHead>
+              <TableHead className="text-center whitespace-nowrap">Aksi</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -82,11 +82,11 @@ const SuratPage = () => {
             ) : (
               paginated.map((item: any, idx: number) => (
                 <TableRow key={item.id}>
-                  <TableCell className="text-sm text-muted-foreground">{startIndex + idx + 1}</TableCell>
+                  <TableCell className="text-sm text-muted-foreground whitespace-nowrap">{startIndex + idx + 1}</TableCell>
                   <TableCell className="text-sm whitespace-nowrap">{formatTanggalID(item.tanggalSurat)}</TableCell>
-                  <TableCell className="text-sm font-mono">{item.nomorSurat || "-"}</TableCell>
-                  <TableCell className="text-sm">{item.judulSurat || "-"}</TableCell>
-                  <TableCell className="text-center">
+                  <TableCell className="text-sm font-mono whitespace-nowrap">{item.nomorSurat || "-"}</TableCell>
+                  <TableCell className="text-sm break-words">{item.judulSurat || "-"}</TableCell>
+                  <TableCell className="text-center whitespace-nowrap">
                     {item.linkSurat ? (
                       <a href={item.linkSurat} target="_blank" rel="noopener noreferrer">
                         <Button size="sm" variant="outline" className="gap-1">
