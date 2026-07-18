@@ -65,7 +65,7 @@ const Laporan = () => {
     <div className="p-6 space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-foreground">Laporan</h1>
-        <p className="text-sm text-muted-foreground mt-1">Daftar laporan per tahapan</p>
+        <p className="text-sm text-muted-foreground mt-1">Daftar laporan per tahapan, diurutkan dari tanggal terbaru</p>
       </div>
 
       <div className="flex flex-wrap gap-3">
@@ -120,6 +120,9 @@ const Laporan = () => {
                 <div className="flex flex-wrap items-center gap-1.5">
                   {item.tahapan && (
                     <Badge variant="secondary" className="text-[9px] px-1.5 py-0 h-4 font-medium">{item.tahapan}</Badge>
+                  )}
+                  {item.tanggalLaporan && (
+                    <span className="text-[10px] text-muted-foreground">{formatTanggalID(item.tanggalLaporan)}</span>
                   )}
                 </div>
               </div>
