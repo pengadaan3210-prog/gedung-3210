@@ -151,6 +151,7 @@ export interface Laporan {
   judulLaporan: string;
   tahapan: string;
   linkLaporan: string;
+  tanggalLaporan: string;
 }
 
 export interface Surat {
