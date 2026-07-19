@@ -400,7 +400,7 @@ export default function KurvaS() {
           <CardDescription>Perbandingan persentase kumulatif Planning vs Realisasi</CardDescription>
         </CardHeader>
         <CardContent>
-          <ResponsiveContainer width="100%" height={400}>
+          <ResponsiveContainer width="100%" height={600}>
             <LineChart data={chartData}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis
