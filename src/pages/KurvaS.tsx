@@ -322,7 +322,7 @@ export default function KurvaS() {
   // Summary stats
   const latestPlanning = planning[planning.length - 1];
   const latestRealisasi = realisasi[realisasi.length - 1];
-  const finalDeviation = (latestRealisasi?.realisasiPersentaseKumulatif || 0) - (latestPlanning?.targetPersentaseKumulatif || 0);
+  const finalDeviation = (latestPlanning?.targetPersentaseKumulatif || 0) - (latestRealisasi?.realisasiPersentaseKumulatif || 0);
   const sesuaiTarget = detailData.filter((d) => d.status === "On track").length;
   const diAtasTarget = detailData.filter((d) => d.status === "Diatas Target").length;
   const diBawahTarget = detailData.filter((d) => d.status === "Dibawah Target").length;
