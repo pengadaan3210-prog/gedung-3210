@@ -364,9 +364,9 @@ export default function KurvaS() {
             <CardTitle className="text-sm font-medium">Deviasi Akhir</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className={`text-3xl font-bold ${finalDeviation > 0 ? "text-green-600" : finalDeviation < 0 ? "text-red-600" : "text-gray-600"}`}>
+            <div className={`text-3xl font-bold ${finalDeviation < 0 ? "text-green-600" : finalDeviation > 0 ? "text-red-600" : "text-gray-600"}`}>
               {finalDeviation > 0 ? "+" : ""}
-              {finalDeviation.toFixed(1)}%
+              {finalDeviation.toFixed(3)}%
             </div>
             <p className="text-xs text-muted-foreground mt-1">Selisih progres</p>
           </CardContent>
