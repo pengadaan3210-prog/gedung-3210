@@ -167,21 +167,22 @@ export default function KurvaS() {
         r !== undefined &&
         ((r.realisasiPersentaseMingguPelaksana || 0) > 0 || (r.realisasiPersentaseKumulatifPelaksana || 0) > 0);
 
-      const deviation = (r?.realisasiPersentaseKumulatif || 0) - p.targetPersentaseKumulatif;
+      // Deviasi = Kum Plan - Kum Real (positif = di bawah target, negatif = di atas target)
+      const deviation = p.targetPersentaseKumulatif - (r?.realisasiPersentaseKumulatif || 0);
       const status =
         deviation > 2
-          ? "Diatas Target"
+          ? "Dibawah Target"
           : deviation < -2
-            ? "Dibawah Target"
+            ? "Diatas Target"
             : "On track";
 
       const real_kum_pel = r?.realisasiPersentaseKumulatifPelaksana || 0;
-      const deviation_pelaksana = real_kum_pel - p.targetPersentaseKumulatif;
+      const deviation_pelaksana = p.targetPersentaseKumulatif - real_kum_pel;
       const status_pelaksana =
         deviation_pelaksana > 2
-          ? "Diatas Target"
+          ? "Dibawah Target"
           : deviation_pelaksana < -2
-            ? "Dibawah Target"
+            ? "Diatas Target"
             : "On track";
 
       return {
@@ -238,7 +239,7 @@ export default function KurvaS() {
             return (
               <div key={entry.dataKey} className="flex justify-between gap-2">
                 <span className="font-medium">{entry.name}</span>
-                <span className={valueClass}>{Number(entry.value).toFixed(2)}%</span>
+                <span className={valueClass}>{Number(entry.value).toFixed(3)}%</span>
               </div>
             );
           })}
@@ -321,7 +322,7 @@ export default function KurvaS() {
   // Summary stats
   const latestPlanning = planning[planning.length - 1];
   const latestRealisasi = realisasi[realisasi.length - 1];
-  const finalDeviation = (latestRealisasi?.realisasiPersentaseKumulatif || 0) - (latestPlanning?.targetPersentaseKumulatif || 0);
+  const finalDeviation = (latestPlanning?.targetPersentaseKumulatif || 0) - (latestRealisasi?.realisasiPersentaseKumulatif || 0);
   const sesuaiTarget = detailData.filter((d) => d.status === "On track").length;
   const diAtasTarget = detailData.filter((d) => d.status === "Diatas Target").length;
   const diBawahTarget = detailData.filter((d) => d.status === "Dibawah Target").length;
@@ -363,9 +364,9 @@ export default function KurvaS() {
             <CardTitle className="text-sm font-medium">Deviasi Akhir</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className={`text-3xl font-bold ${finalDeviation > 0 ? "text-green-600" : finalDeviation < 0 ? "text-red-600" : "text-gray-600"}`}>
+            <div className={`text-3xl font-bold ${finalDeviation < 0 ? "text-green-600" : finalDeviation > 0 ? "text-red-600" : "text-gray-600"}`}>
               {finalDeviation > 0 ? "+" : ""}
-              {finalDeviation.toFixed(1)}%
+              {finalDeviation.toFixed(3)}%
             </div>
             <p className="text-xs text-muted-foreground mt-1">Selisih progres</p>
           </CardContent>
@@ -485,23 +486,23 @@ export default function KurvaS() {
                         </div>
                       </div>
                     </TableCell>
-                    <TableCell className="text-center text-sm">{row.plan_persen.toFixed(1)}%</TableCell>
-                    <TableCell className="text-center text-sm">{row.real_persen.toFixed(1)}%</TableCell>
-                    <TableCell className="text-center text-sm font-medium">{row.plan_kumulatif.toFixed(1)}%</TableCell>
-                    <TableCell className="text-center text-sm font-medium">{row.real_kumulatif.toFixed(1)}%</TableCell>
+                    <TableCell className="text-center text-sm">{row.plan_persen.toFixed(3)}%</TableCell>
+                    <TableCell className="text-center text-sm">{row.real_persen.toFixed(3)}%</TableCell>
+                    <TableCell className="text-center text-sm font-medium">{row.plan_kumulatif.toFixed(3)}%</TableCell>
+                    <TableCell className="text-center text-sm font-medium">{row.real_kumulatif.toFixed(3)}%</TableCell>
                     <TableCell className="text-center">
                       {row.hasRealisasiPengawas ? (
                         <span
                           className={`text-sm font-medium ${
-                            row.deviation > 0
+                            row.deviation < 0
                               ? "text-green-600"
-                              : row.deviation < 0
+                              : row.deviation > 0
                                 ? "text-red-600"
                                 : "text-gray-600"
                           }`}
                         >
                           {row.deviation > 0 ? "+" : ""}
-                          {row.deviation.toFixed(2)}%
+                          {row.deviation.toFixed(3)}%
                         </span>
                       ) : (
                         <span className="text-muted-foreground text-sm">-</span>
@@ -595,23 +596,23 @@ export default function KurvaS() {
                         </div>
                       </div>
                     </TableCell>
-                    <TableCell className="text-center text-sm">{row.plan_persen.toFixed(1)}%</TableCell>
-                    <TableCell className="text-center text-sm">{row.real_persen_pelaksana.toFixed(1)}%</TableCell>
-                    <TableCell className="text-center text-sm font-medium">{row.plan_kumulatif.toFixed(1)}%</TableCell>
-                    <TableCell className="text-center text-sm font-medium text-purple-700">{row.real_kumulatif_pelaksana.toFixed(1)}%</TableCell>
+                    <TableCell className="text-center text-sm">{row.plan_persen.toFixed(3)}%</TableCell>
+                    <TableCell className="text-center text-sm">{row.real_persen_pelaksana.toFixed(3)}%</TableCell>
+                    <TableCell className="text-center text-sm font-medium">{row.plan_kumulatif.toFixed(3)}%</TableCell>
+                    <TableCell className="text-center text-sm font-medium text-purple-700">{row.real_kumulatif_pelaksana.toFixed(3)}%</TableCell>
                     <TableCell className="text-center">
                       {row.hasRealisasiPelaksana ? (
                         <span
                           className={`text-sm font-medium ${
-                            row.deviation_pelaksana > 0
+                            row.deviation_pelaksana < 0
                               ? "text-green-600"
-                              : row.deviation_pelaksana < 0
+                              : row.deviation_pelaksana > 0
                                 ? "text-red-600"
                                 : "text-gray-600"
                           }`}
                         >
                           {row.deviation_pelaksana > 0 ? "+" : ""}
-                          {row.deviation_pelaksana.toFixed(2)}%
+                          {row.deviation_pelaksana.toFixed(3)}%
                         </span>
                       ) : (
                         <span className="text-muted-foreground text-sm">-</span>
