@@ -486,23 +486,23 @@ export default function KurvaS() {
                         </div>
                       </div>
                     </TableCell>
-                    <TableCell className="text-center text-sm">{row.plan_persen.toFixed(1)}%</TableCell>
-                    <TableCell className="text-center text-sm">{row.real_persen.toFixed(1)}%</TableCell>
-                    <TableCell className="text-center text-sm font-medium">{row.plan_kumulatif.toFixed(1)}%</TableCell>
-                    <TableCell className="text-center text-sm font-medium">{row.real_kumulatif.toFixed(1)}%</TableCell>
+                    <TableCell className="text-center text-sm">{row.plan_persen.toFixed(3)}%</TableCell>
+                    <TableCell className="text-center text-sm">{row.real_persen.toFixed(3)}%</TableCell>
+                    <TableCell className="text-center text-sm font-medium">{row.plan_kumulatif.toFixed(3)}%</TableCell>
+                    <TableCell className="text-center text-sm font-medium">{row.real_kumulatif.toFixed(3)}%</TableCell>
                     <TableCell className="text-center">
                       {row.hasRealisasiPengawas ? (
                         <span
                           className={`text-sm font-medium ${
-                            row.deviation > 0
+                            row.deviation < 0
                               ? "text-green-600"
-                              : row.deviation < 0
+                              : row.deviation > 0
                                 ? "text-red-600"
                                 : "text-gray-600"
                           }`}
                         >
                           {row.deviation > 0 ? "+" : ""}
-                          {row.deviation.toFixed(2)}%
+                          {row.deviation.toFixed(3)}%
                         </span>
                       ) : (
                         <span className="text-muted-foreground text-sm">-</span>
