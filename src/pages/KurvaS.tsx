@@ -167,21 +167,22 @@ export default function KurvaS() {
         r !== undefined &&
         ((r.realisasiPersentaseMingguPelaksana || 0) > 0 || (r.realisasiPersentaseKumulatifPelaksana || 0) > 0);
 
-      const deviation = (r?.realisasiPersentaseKumulatif || 0) - p.targetPersentaseKumulatif;
+      // Deviasi = Kum Plan - Kum Real (positif = di bawah target, negatif = di atas target)
+      const deviation = p.targetPersentaseKumulatif - (r?.realisasiPersentaseKumulatif || 0);
       const status =
         deviation > 2
-          ? "Diatas Target"
+          ? "Dibawah Target"
           : deviation < -2
-            ? "Dibawah Target"
+            ? "Diatas Target"
             : "On track";
 
       const real_kum_pel = r?.realisasiPersentaseKumulatifPelaksana || 0;
-      const deviation_pelaksana = real_kum_pel - p.targetPersentaseKumulatif;
+      const deviation_pelaksana = p.targetPersentaseKumulatif - real_kum_pel;
       const status_pelaksana =
         deviation_pelaksana > 2
-          ? "Diatas Target"
+          ? "Dibawah Target"
           : deviation_pelaksana < -2
-            ? "Dibawah Target"
+            ? "Diatas Target"
             : "On track";
 
       return {
