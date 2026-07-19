@@ -25,11 +25,8 @@ const Laporan = () => {
   if (isLoading) return <div className="p-6"><LoadingState /></div>;
   if (isError) return <div className="p-6"><ErrorState onRetry={() => refetch()} /></div>;
 
-  const sorted = [...(data || [])].sort((a: any, b: any) => {
-    const da = a.tanggalLaporan ? new Date(a.tanggalLaporan).getTime() : 0;
-    const db = b.tanggalLaporan ? new Date(b.tanggalLaporan).getTime() : 0;
-    return db - da;
-  });
+  // Urutkan dari baris terakhir sheet (data paling baru diinput di baris paling bawah)
+  const sorted = [...(data || [])].reverse();
 
   const filtered = sorted.filter((d: any) => {
     if (!search) return true;

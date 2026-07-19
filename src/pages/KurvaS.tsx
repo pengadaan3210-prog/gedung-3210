@@ -400,7 +400,7 @@ export default function KurvaS() {
           <CardDescription>Perbandingan persentase kumulatif Planning vs Realisasi</CardDescription>
         </CardHeader>
         <CardContent>
-          <ResponsiveContainer width="100%" height={400}>
+          <ResponsiveContainer width="100%" height={600}>
             <LineChart data={chartData}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis
@@ -529,24 +529,28 @@ export default function KurvaS() {
                       )}
                     </TableCell>
                     <TableCell>
-                      <Badge
-                        variant={
-                          row.status === "On track"
-                            ? "outline"
-                            : row.status === "Diatas Target"
-                              ? "secondary"
-                              : "destructive"
-                        }
-                        className={
-                          row.status === "On track"
-                            ? "bg-blue-50 text-blue-700 border-blue-200"
-                            : row.status === "Diatas Target"
-                              ? "bg-green-50 text-green-700 border-green-200"
-                              : "bg-red-50 text-red-700 border-red-200"
-                        }
-                      >
-                        {row.status}
-                      </Badge>
+                      {row.hasRealisasiPengawas ? (
+                        <Badge
+                          variant={
+                            row.status === "On track"
+                              ? "outline"
+                              : row.status === "Diatas Target"
+                                ? "secondary"
+                                : "destructive"
+                          }
+                          className={
+                            row.status === "On track"
+                              ? "bg-blue-50 text-blue-700 border-blue-200"
+                              : row.status === "Diatas Target"
+                                ? "bg-green-50 text-green-700 border-green-200"
+                                : "bg-red-50 text-red-700 border-red-200"
+                          }
+                        >
+                          {row.status}
+                        </Badge>
+                      ) : (
+                        <span className="text-muted-foreground text-sm">-</span>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}
@@ -614,24 +618,28 @@ export default function KurvaS() {
                       )}
                     </TableCell>
                     <TableCell>
-                      <Badge
-                        variant={
-                          row.status_pelaksana === "On track"
-                            ? "outline"
-                            : row.status_pelaksana === "Diatas Target"
-                              ? "secondary"
-                              : "destructive"
-                        }
-                        className={
-                          row.status_pelaksana === "On track"
-                            ? "bg-blue-50 text-blue-700 border-blue-200"
-                            : row.status_pelaksana === "Diatas Target"
-                              ? "bg-green-50 text-green-700 border-green-200"
-                              : "bg-red-50 text-red-700 border-red-200"
-                        }
-                      >
-                        {row.status_pelaksana}
-                      </Badge>
+                      {row.hasRealisasiPelaksana ? (
+                        <Badge
+                          variant={
+                            row.status_pelaksana === "On track"
+                              ? "outline"
+                              : row.status_pelaksana === "Diatas Target"
+                                ? "secondary"
+                                : "destructive"
+                          }
+                          className={
+                            row.status_pelaksana === "On track"
+                              ? "bg-blue-50 text-blue-700 border-blue-200"
+                              : row.status_pelaksana === "Diatas Target"
+                                ? "bg-green-50 text-green-700 border-green-200"
+                                : "bg-red-50 text-red-700 border-red-200"
+                          }
+                        >
+                          {row.status_pelaksana}
+                        </Badge>
+                      ) : (
+                        <span className="text-muted-foreground text-sm">-</span>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}
