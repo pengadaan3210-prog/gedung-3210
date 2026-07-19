@@ -529,24 +529,28 @@ export default function KurvaS() {
                       )}
                     </TableCell>
                     <TableCell>
-                      <Badge
-                        variant={
-                          row.status === "On track"
-                            ? "outline"
-                            : row.status === "Diatas Target"
-                              ? "secondary"
-                              : "destructive"
-                        }
-                        className={
-                          row.status === "On track"
-                            ? "bg-blue-50 text-blue-700 border-blue-200"
-                            : row.status === "Diatas Target"
-                              ? "bg-green-50 text-green-700 border-green-200"
-                              : "bg-red-50 text-red-700 border-red-200"
-                        }
-                      >
-                        {row.status}
-                      </Badge>
+                      {row.hasRealisasiPengawas ? (
+                        <Badge
+                          variant={
+                            row.status === "On track"
+                              ? "outline"
+                              : row.status === "Diatas Target"
+                                ? "secondary"
+                                : "destructive"
+                          }
+                          className={
+                            row.status === "On track"
+                              ? "bg-blue-50 text-blue-700 border-blue-200"
+                              : row.status === "Diatas Target"
+                                ? "bg-green-50 text-green-700 border-green-200"
+                                : "bg-red-50 text-red-700 border-red-200"
+                          }
+                        >
+                          {row.status}
+                        </Badge>
+                      ) : (
+                        <span className="text-muted-foreground text-sm">-</span>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}
