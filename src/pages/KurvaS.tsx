@@ -239,7 +239,7 @@ export default function KurvaS() {
             return (
               <div key={entry.dataKey} className="flex justify-between gap-2">
                 <span className="font-medium">{entry.name}</span>
-                <span className={valueClass}>{Number(entry.value).toFixed(2)}%</span>
+                <span className={valueClass}>{Number(entry.value).toFixed(3)}%</span>
               </div>
             );
           })}
