@@ -118,17 +118,17 @@ export default function KurvaS() {
     return planning.map((p) => {
       const r = realisasi.find((r) => r.mingguke === p.mingguke);
 
-      // Periode minggu sudah dimulai jika tanggalAwal <= hari ini
-      const startDate = parseDate(p.tanggalAwal);
-      const periodStarted = startDate ? startDate <= today : true;
+      // Periode minggu selesai jika tanggalAkhir sudah lewat (hari ini > tanggalAkhir)
+      const endDate = parseDate(p.tanggalAkhir);
+      const periodPassed = endDate ? today > endDate : false;
 
       const hasPengawas =
-        periodStarted &&
+        periodPassed &&
         r !== undefined &&
         ((r.realisasiPersentaseMinggu || 0) > 0 || (r.realisasiPersentaseKumulatif || 0) > 0);
 
       const hasPelaksana =
-        periodStarted &&
+        periodPassed &&
         r !== undefined &&
         ((r.realisasiPersentaseMingguPelaksana || 0) > 0 || (r.realisasiPersentaseKumulatifPelaksana || 0) > 0);
 
@@ -149,39 +149,39 @@ export default function KurvaS() {
     return planning.map((p) => {
       const r = realisasi.find((r) => r.mingguke === p.mingguke);
 
-      // Periode minggu sudah dimulai jika tanggalAwal <= hari ini
-      const startDate = parseDate(p.tanggalAwal);
-      const periodStarted = startDate ? startDate <= today : true;
+      // Periode minggu selesai jika tanggalAkhir sudah lewat
+      const endDate = parseDate(p.tanggalAkhir);
+      const periodPassed = endDate ? today > endDate : false;
 
-      // Determine if realisasi data exists for this week (pengawas)
+      // Pengawas table sources Real % from column M (pelaksana minggu) and Kum Real from column N (pelaksana kumulatif)
+      const real_persen_source = r?.realisasiPersentaseMingguPelaksana || 0;
+      const real_kum_source = r?.realisasiPersentaseKumulatifPelaksana || 0;
+
       const hasRealisasiPengawas =
-        periodStarted &&
+        periodPassed &&
         r !== undefined &&
-        (r.realisasiPersentaseMinggu !== undefined && r.realisasiPersentaseMinggu !== null && (r.realisasiPersentaseMinggu as any) !== "" ||
-          r.realisasiPersentaseKumulatif !== undefined && r.realisasiPersentaseKumulatif !== null && (r.realisasiPersentaseKumulatif as any) !== "") &&
-        ((r.realisasiPersentaseMinggu || 0) > 0 || (r.realisasiPersentaseKumulatif || 0) > 0);
+        (real_persen_source > 0 || real_kum_source > 0);
 
-      // Determine if realisasi data exists for this week (pelaksana)
       const hasRealisasiPelaksana =
-        periodStarted &&
+        periodPassed &&
         r !== undefined &&
         ((r.realisasiPersentaseMingguPelaksana || 0) > 0 || (r.realisasiPersentaseKumulatifPelaksana || 0) > 0);
 
-      // Deviasi = Kum Plan - Kum Real (positif = di bawah target, negatif = di atas target)
-      const deviation = p.targetPersentaseKumulatif - (r?.realisasiPersentaseKumulatif || 0);
+      // Deviasi = Kum Real - Kum Plan (positif hijau = di atas target, negatif merah = di bawah)
+      const deviation = real_kum_source - p.targetPersentaseKumulatif;
       const status =
-        deviation > 2
+        deviation < -2
           ? "Dibawah Target"
-          : deviation < -2
+          : deviation > 2
             ? "Diatas Target"
             : "On track";
 
       const real_kum_pel = r?.realisasiPersentaseKumulatifPelaksana || 0;
-      const deviation_pelaksana = p.targetPersentaseKumulatif - real_kum_pel;
+      const deviation_pelaksana = real_kum_pel - p.targetPersentaseKumulatif;
       const status_pelaksana =
-        deviation_pelaksana > 2
+        deviation_pelaksana < -2
           ? "Dibawah Target"
-          : deviation_pelaksana < -2
+          : deviation_pelaksana > 2
             ? "Diatas Target"
             : "On track";
 
@@ -189,8 +189,8 @@ export default function KurvaS() {
         minggu: p.mingguke,
         plan_persen: p.targetPersentaseMinggu || 0,
         plan_kumulatif: p.targetPersentaseKumulatif,
-        real_persen: r?.realisasiPersentaseMinggu || 0,
-        real_kumulatif: r?.realisasiPersentaseKumulatif || 0,
+        real_persen: real_persen_source,
+        real_kumulatif: real_kum_source,
         real_persen_pelaksana: r?.realisasiPersentaseMingguPelaksana || 0,
         real_kumulatif_pelaksana: real_kum_pel,
         hasRealisasiPengawas,
