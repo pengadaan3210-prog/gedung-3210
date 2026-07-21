@@ -494,9 +494,9 @@ export default function KurvaS() {
                       {row.hasRealisasiPengawas ? (
                         <span
                           className={`text-sm font-medium ${
-                            row.deviation < 0
+                            row.deviation > 0
                               ? "text-green-600"
-                              : row.deviation > 0
+                              : row.deviation < 0
                                 ? "text-red-600"
                                 : "text-gray-600"
                           }`}
