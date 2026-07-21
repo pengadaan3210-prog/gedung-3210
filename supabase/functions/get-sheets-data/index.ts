@@ -337,6 +337,21 @@ function mapSurat(raw: Record<string, string>[]) {
   }));
 }
 
+function parsePercent(v: string): number {
+  if (!v) return 0;
+  // Handles "2,054%" (id-ID) or "2.054%" or plain "2.054"
+  let s = String(v).trim().replace(/%/g, '').replace(/\s/g, '');
+  if (s.includes(',') && s.includes('.')) {
+    // e.g. "1.234,567" -> "1234.567"
+    s = s.replace(/\./g, '').replace(',', '.');
+  } else if (s.includes(',')) {
+    // Indonesian decimal: "2,054" -> "2.054"
+    s = s.replace(',', '.');
+  }
+  const n = parseFloat(s);
+  return isNaN(n) ? 0 : n;
+}
+
 function mapKurvaSPlanning(raw: Record<string, string>[]) {
   return raw.map((r) => ({
     id: r.id || '',
@@ -344,9 +359,9 @@ function mapKurvaSPlanning(raw: Record<string, string>[]) {
     tanggalAwal: parseDate(r.tanggal_awal || r.tglawal || ''),
     tanggalAkhir: parseDate(r.tanggal_akhir || r.tglakhir || ''),
     deskripsiTahapan: r.deskripsi_tahapan || r.deskripsi || '',
-    targetPersentasePersentaseMinggu: parseFloat(r.target_persentase_minggu || r.target_persen_minggu || '0') || 0,
-    targetPersentaseMinggu: parseFloat(r.target_persentase_minggu || r.target_persen_minggu || '0') || 0,
-    targetPersentaseKumulatif: parseFloat(r.target_persentase_kumulatif || r.target_kumulatif || '0') || 0,
+    targetPersentasePersentaseMinggu: parsePercent(r.target_persentase_minggu || r.target_persen_minggu || ''),
+    targetPersentaseMinggu: parsePercent(r.target_persentase_minggu || r.target_persen_minggu || ''),
+    targetPersentaseKumulatif: parsePercent(r.target_persentase_kumulatif || r.target_kumulatif || ''),
     keterangan: r.keterangan || '',
   }));
 }
@@ -358,10 +373,10 @@ function mapKurvaSRealisasi(raw: Record<string, string>[]) {
     tanggalAwal: parseDate(r.tanggal_awal || r.tglawal || ''),
     tanggalAkhir: parseDate(r.tanggal_akhir || r.tglakhir || ''),
     deskripsiPekerjaanMinggu: r.deskripsi_pekerjaan_minggu || r.deskripsi || '',
-    realisasiPersentaseMinggu: parseFloat(r.realisasi_persentase_minggu || r.realisasi_persen_minggu || '0') || 0,
-    realisasiPersentaseKumulatif: parseFloat(r.realisasi_persentase_kumulatif || r.realisasi_kumulatif || '0') || 0,
-    realisasiPersentaseMingguPelaksana: parseFloat(r.realisasi_persentase_minggu_pelaksana || r.realisasi_persen_minggu_pelaksana || r.realisasi_minggu_pelaksana || '0') || 0,
-    realisasiPersentaseKumulatifPelaksana: parseFloat(r.realisasi_persentase_kumulatif_pelaksana || r.realisasi_kumulatif_pelaksana || '0') || 0,
+    realisasiPersentaseMinggu: parsePercent(r.realisasi_persentase_minggu || r.realisasi_persen_minggu || ''),
+    realisasiPersentaseKumulatif: parsePercent(r.realisasi_persentase_kumulatif || r.realisasi_kumulatif || ''),
+    realisasiPersentaseMingguPelaksana: parsePercent(r.realisasi_persentase_minggu_pelaksana || r.realisasi_persen_minggu_pelaksana || r.realisasi_minggu_pelaksana || ''),
+    realisasiPersentaseKumulatifPelaksana: parsePercent(r.realisasi_persentase_kumulatif_pelaksana || r.realisasi_kumulatif_pelaksana || ''),
     kendala: r.kendala || '-',
     solusi: r.solusi || '-',
     pic: r.pic || '',
@@ -370,6 +385,7 @@ function mapKurvaSRealisasi(raw: Record<string, string>[]) {
     linkLaporanMingguanPelaksana: r.link_laporan_mingguan_pelaksana || r.linkLaporanMingguanPelaksana || r.link_laporan_pelaksana || r.link_pelaksana || r['Link Laporan Mingguan Pelaksana'] || r['link laporan mingguan pelaksana'] || r['Laporan Mingguan Pelaksana'] || r['laporan mingguan pelaksana'] || '',
   }));
 }
+
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
