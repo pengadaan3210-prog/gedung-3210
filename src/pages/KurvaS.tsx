@@ -604,9 +604,9 @@ export default function KurvaS() {
                       {row.hasRealisasiPelaksana ? (
                         <span
                           className={`text-sm font-medium ${
-                            row.deviation_pelaksana < 0
+                            row.deviation_pelaksana > 0
                               ? "text-green-600"
-                              : row.deviation_pelaksana > 0
+                              : row.deviation_pelaksana < 0
                                 ? "text-red-600"
                                 : "text-gray-600"
                           }`}
