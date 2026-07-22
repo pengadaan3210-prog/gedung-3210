@@ -189,17 +189,13 @@ export default function KurvaS() {
   if (isLoading) return <LoadingState />;
   if (error) return <ErrorState message={error instanceof Error ? error.message : "Gagal memuat data Kurva S"} />;
 
-  // Current week (minggu berjalan). Fallback: last passed week.
+  // Minggu berjalan = minggu terakhir yang periodenya sudah lewat (selesai).
   const currentWeek =
-    detailData.find((d) => d.isCurrent) ||
-    [...detailData].reverse().find((d) => d.periodPassed) ||
-    detailData[0];
+    [...detailData].reverse().find((d) => d.periodPassed) || detailData[0];
 
   const rencanaMingguIni = currentWeek?.plan_kumulatif || 0;
   const realisasiMingguIni = currentWeek?.hasRealisasi ? currentWeek.real_kumulatif : 0;
-  const deviasiMingguIni = currentWeek?.hasRealisasi
-    ? currentWeek.deviation
-    : (currentWeek?.isCurrent ? -rencanaMingguIni : 0);
+  const deviasiMingguIni = currentWeek?.hasRealisasi ? currentWeek.deviation : 0;
 
   // Statistics
   const evaluated = detailData.filter((d) => d.hasRealisasi);
