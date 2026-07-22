@@ -22,7 +22,6 @@ import {
 import { useSheetsData } from "@/hooks/useSheetsData";
 import LoadingState from "@/components/LoadingState";
 import ErrorState from "@/components/ErrorState";
-import { KurvaSPlanning, KurvaSRealisasi } from "@/lib/types";
 
 export default function KurvaS() {
   const { data, isLoading, error } = useSheetsData();
@@ -31,57 +30,35 @@ export default function KurvaS() {
   const planning = data?.kurvaSPlanning || [];
   const realisasi = data?.kurvaSRealisasi || [];
 
-  // Debug logging
-  console.log('Realisasi data:', realisasi.slice(0, 2)); // Show first 2 records
-  if (realisasi.length > 0) {
-    console.log('Sample realisasi record:', realisasi[0]);
-    console.log('linkLaporanMingguanPengawas:', realisasi[0].linkLaporanMingguanPengawas);
-    console.log('linkLaporanMingguanPelaksana:', realisasi[0].linkLaporanMingguanPelaksana);
-  }
-
-  // Merge data untuk chart
   const formatDateIndo = (dateInput: string) => {
     if (!dateInput || dateInput === "-") return "-";
-
     const isoDash = dateInput.match(/^(\d{4})-(\d{2})-(\d{2})$/);
     if (isoDash) {
       const [, yyyy, part2, part3] = isoDash;
       const p2 = Number(part2);
       const p3 = Number(part3);
-
-      // If format is yyyy-dd-mm (e.g. 2026-31-08) where month > 12, swap
       if (p2 > 12 && p3 <= 12) {
         return `${String(p2).padStart(2, "0")}/${String(p3).padStart(2, "0")}/${yyyy}`;
       }
-
-      // Normal ISO yyyy-mm-dd
       if (p2 >= 1 && p2 <= 12 && p3 >= 1 && p3 <= 31) {
         return `${String(p3).padStart(2, "0")}/${String(p2).padStart(2, "0")}/${yyyy}`;
       }
     }
-
-    // dd/mm/yyyy or mm/dd/yyyy
     const slash = dateInput.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
     if (slash) {
       const dd = Number(slash[1]);
       const mm = Number(slash[2]);
       const yyyy = slash[3];
-
-      // if looks like dd/mm/yyyy (day>12) keep (or always output dd/mm/yyyy)
       return `${String(dd).padStart(2, "0")}/${String(mm).padStart(2, "0")}/${yyyy}`;
     }
-
-    // Fallback: try Date constructor for other formats
     const date = new Date(dateInput);
     if (Number.isNaN(date.getTime())) return dateInput;
-
     const dd = String(date.getDate()).padStart(2, "0");
     const mm = String(date.getMonth() + 1).padStart(2, "0");
     const yyyy = date.getFullYear();
     return `${dd}/${mm}/${yyyy}`;
   };
 
-  // Parse berbagai format tanggal ke Date object
   const parseDate = (dateInput: string): Date | null => {
     if (!dateInput || dateInput === "-") return null;
     const isoDash = dateInput.match(/^(\d{4})-(\d{2})-(\d{2})$/);
@@ -107,7 +84,6 @@ export default function KurvaS() {
     return Number.isNaN(d.getTime()) ? null : d;
   };
 
-  // "Hari ini" - normalisasi ke awal hari
   const today = useMemo(() => {
     const d = new Date();
     d.setHours(0, 0, 0, 0);
@@ -117,58 +93,40 @@ export default function KurvaS() {
   const chartData = useMemo(() => {
     return planning.map((p) => {
       const r = realisasi.find((r) => r.mingguke === p.mingguke);
-
-      // Periode minggu selesai jika tanggalAkhir sudah lewat (hari ini > tanggalAkhir)
       const endDate = parseDate(p.tanggalAkhir);
       const periodPassed = endDate ? today > endDate : false;
 
-      const hasPengawas =
+      const hasReal =
         periodPassed &&
         r !== undefined &&
-        ((r.realisasiPersentaseMinggu || 0) > 0 || (r.realisasiPersentaseKumulatif || 0) > 0);
-
-      const hasPelaksana =
-        periodPassed &&
-        r !== undefined &&
-        ((r.realisasiPersentaseMingguPelaksana || 0) > 0 || (r.realisasiPersentaseKumulatifPelaksana || 0) > 0);
+        ((r.realisasiPersentaseMingguPelaksana || 0) > 0 ||
+          (r.realisasiPersentaseKumulatifPelaksana || 0) > 0);
 
       return {
         minggu: p.mingguke,
         planning: p.targetPersentaseKumulatif,
-        realisasi: hasPengawas ? (r?.realisasiPersentaseKumulatif || 0) : null,
-        realisasiPelaksana: hasPelaksana ? (r?.realisasiPersentaseKumulatifPelaksana || 0) : null,
-        deviasi: (r?.realisasiPersentaseKumulatif || 0) - p.targetPersentaseKumulatif,
+        realisasi: hasReal ? (r?.realisasiPersentaseKumulatifPelaksana || 0) : null,
         tanggalAwal: p.tanggalAwal ? formatDateIndo(p.tanggalAwal) : "-",
         tanggalAkhir: p.tanggalAkhir ? formatDateIndo(p.tanggalAkhir) : "-",
       };
     });
   }, [planning, realisasi, today]);
 
-  // Detail tabel dengan deviasi
   const detailData = useMemo(() => {
     return planning.map((p) => {
       const r = realisasi.find((r) => r.mingguke === p.mingguke);
-
-      // Periode minggu selesai jika tanggalAkhir sudah lewat
       const endDate = parseDate(p.tanggalAkhir);
+      const startDate = parseDate(p.tanggalAwal);
       const periodPassed = endDate ? today > endDate : false;
+      const isCurrent = !!(startDate && endDate && today >= startDate && today <= endDate);
 
-      // Pengawas table sources Real % from column M (pelaksana minggu) and Kum Real from column N (pelaksana kumulatif)
-      const real_persen_source = r?.realisasiPersentaseMingguPelaksana || 0;
-      const real_kum_source = r?.realisasiPersentaseKumulatifPelaksana || 0;
+      const real_persen = r?.realisasiPersentaseMingguPelaksana || 0;
+      const real_kum = r?.realisasiPersentaseKumulatifPelaksana || 0;
 
-      const hasRealisasiPengawas =
-        periodPassed &&
-        r !== undefined &&
-        (real_persen_source > 0 || real_kum_source > 0);
+      const hasRealisasi =
+        periodPassed && r !== undefined && (real_persen > 0 || real_kum > 0);
 
-      const hasRealisasiPelaksana =
-        periodPassed &&
-        r !== undefined &&
-        ((r.realisasiPersentaseMingguPelaksana || 0) > 0 || (r.realisasiPersentaseKumulatifPelaksana || 0) > 0);
-
-      // Deviasi = Kum Real - Kum Plan (positif hijau = di atas target, negatif merah = di bawah)
-      const deviation = real_kum_source - p.targetPersentaseKumulatif;
+      const deviation = real_kum - p.targetPersentaseKumulatif;
       const status =
         deviation < -2
           ? "Dibawah Target"
@@ -176,36 +134,22 @@ export default function KurvaS() {
             ? "Diatas Target"
             : "On track";
 
-      const real_kum_pel = r?.realisasiPersentaseKumulatifPelaksana || 0;
-      const deviation_pelaksana = real_kum_pel - p.targetPersentaseKumulatif;
-      const status_pelaksana =
-        deviation_pelaksana < -2
-          ? "Dibawah Target"
-          : deviation_pelaksana > 2
-            ? "Diatas Target"
-            : "On track";
-
       return {
         minggu: p.mingguke,
         plan_persen: p.targetPersentaseMinggu || 0,
         plan_kumulatif: p.targetPersentaseKumulatif,
-        real_persen: real_persen_source,
-        real_kumulatif: real_kum_source,
-        real_persen_pelaksana: r?.realisasiPersentaseMingguPelaksana || 0,
-        real_kumulatif_pelaksana: real_kum_pel,
-        hasRealisasiPengawas,
-        hasRealisasiPelaksana,
+        real_persen,
+        real_kumulatif: real_kum,
+        hasRealisasi,
+        isCurrent,
+        periodPassed,
         deviation,
-        deviation_pelaksana,
         status,
-        status_pelaksana,
         deskripsi: p.deskripsiTahapan,
         pekerjaan: r?.deskripsiPekerjaanMinggu || "-",
         tanggalAwal: p.tanggalAwal || "",
         tanggalAkhir: p.tanggalAkhir || "",
-        kendala: r?.kendala || "-",
-        solusi: r?.solusi || "-",
-        pic: r?.pic || "-",
+        linkLaporanPengawas: r?.linkLaporanMingguanPengawas || "",
       };
     });
   }, [planning, realisasi, today]);
@@ -220,7 +164,6 @@ export default function KurvaS() {
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (!active || !payload || payload.length === 0) return null;
     const current = chartData.find((item) => item.minggu === label);
-
     return (
       <div className="rounded border bg-white p-2 text-sm shadow-lg">
         <p className="font-semibold">Minggu {label}</p>
@@ -229,13 +172,8 @@ export default function KurvaS() {
         </p>
         <div className="mt-1">
           {payload.map((entry: any) => {
-            const valueClass = entry.dataKey === "planning"
-              ? "text-blue-600"
-              : entry.dataKey === "realisasi"
-                ? "text-orange-600"
-                : entry.dataKey === "realisasiPelaksana"
-                  ? "text-purple-600"
-                  : "text-gray-700";
+            const valueClass =
+              entry.dataKey === "planning" ? "text-blue-600" : "text-red-600";
             return (
               <div key={entry.dataKey} className="flex justify-between gap-2">
                 <span className="font-medium">{entry.name}</span>
@@ -248,84 +186,38 @@ export default function KurvaS() {
     );
   };
 
-  const realisasiRows = useMemo(() => {
-    return realisasi.map((r) => {
-      const planWeek = planning.find((p) => p.mingguke === r.mingguke);
-      return (
-        <TableRow key={r.id}>
-          <TableCell className="font-medium">{r.mingguke}</TableCell>
-          <TableCell className="text-sm">
-            <div className="space-y-1">
-              <div>{r.deskripsiPekerjaanMinggu}</div>
-              <div className="text-xs text-muted-foreground">
-                {planWeek && planWeek.tanggalAwal && planWeek.tanggalAkhir
-                  ? `${formatDateIndo(planWeek.tanggalAwal)} sd ${formatDateIndo(planWeek.tanggalAkhir)}`
-                  : "-"}
-              </div>
-            </div>
-          </TableCell>
-          <TableCell className="text-center text-sm whitespace-normal break-words max-w-[100px]">{r.realisasiPersentaseMinggu?.toFixed(1)}%</TableCell>
-          <TableCell className="text-center text-sm font-medium whitespace-normal break-words max-w-[120px]">{r.realisasiPersentaseKumulatif?.toFixed(1)}%</TableCell>
-          <TableCell className="text-sm">
-            {r.kendala !== "-" ? (
-              <div>
-                <span className="font-medium text-red-600">K: </span>
-                {r.kendala}
-                {r.solusi !== "-" && (
-                  <>
-                    <br />
-                    <span className="font-medium text-green-600">S: </span>
-                    {r.solusi}
-                  </>
-                )}
-              </div>
-            ) : (
-              <span className="text-muted-foreground">-</span>
-            )}
-          </TableCell>
-          <TableCell className="text-sm font-medium">{r.pic}</TableCell>
-          <TableCell>
-            {r.linkFotoProgres && r.linkFotoProgres !== "-" ? (
-              <a href={r.linkFotoProgres} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline text-sm">
-                Foto →
-              </a>
-            ) : (
-              <span className="text-muted-foreground text-sm">-</span>
-            )}
-          </TableCell>
-          <TableCell className="whitespace-normal break-words max-w-[150px]">
-            {r.linkLaporanMingguanPengawas && r.linkLaporanMingguanPengawas !== "-" ? (
-              <a href={r.linkLaporanMingguanPengawas} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline text-sm">
-                Laporan →
-              </a>
-            ) : (
-              <span className="text-muted-foreground text-sm">-</span>
-            )}
-          </TableCell>
-          <TableCell className="whitespace-normal break-words max-w-[150px]">
-            {r.linkLaporanMingguanPelaksana && r.linkLaporanMingguanPelaksana !== "-" ? (
-              <a href={r.linkLaporanMingguanPelaksana} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline text-sm">
-                Laporan →
-              </a>
-            ) : (
-              <span className="text-muted-foreground text-sm">-</span>
-            )}
-          </TableCell>
-        </TableRow>
-      );
-    });
-  }, [realisasi, planning]);
-
   if (isLoading) return <LoadingState />;
   if (error) return <ErrorState message={error instanceof Error ? error.message : "Gagal memuat data Kurva S"} />;
 
-  // Summary stats
+  // Current week (minggu berjalan). Fallback: last passed week.
+  const currentWeek =
+    detailData.find((d) => d.isCurrent) ||
+    [...detailData].reverse().find((d) => d.periodPassed) ||
+    detailData[0];
+
+  const rencanaMingguIni = currentWeek?.plan_kumulatif || 0;
+  const realisasiMingguIni = currentWeek?.hasRealisasi ? currentWeek.real_kumulatif : 0;
+  const deviasiMingguIni = currentWeek?.hasRealisasi
+    ? currentWeek.deviation
+    : (currentWeek?.isCurrent ? -rencanaMingguIni : 0);
+
+  // Statistics
+  const evaluated = detailData.filter((d) => d.hasRealisasi);
+  const sesuaiTarget = evaluated.filter((d) => d.status === "On track").length;
+  const diAtasTarget = evaluated.filter((d) => d.status === "Diatas Target").length;
+  const diBawahTarget = evaluated.filter((d) => d.status === "Dibawah Target").length;
+
+  const avgDeviation =
+    evaluated.length > 0
+      ? evaluated.reduce((sum, d) => sum + d.deviation, 0) / evaluated.length
+      : 0;
+  const maxDeviation =
+    evaluated.length > 0 ? Math.max(...evaluated.map((d) => d.deviation)) : 0;
+  const minDeviation =
+    evaluated.length > 0 ? Math.min(...evaluated.map((d) => d.deviation)) : 0;
+
   const latestPlanning = planning[planning.length - 1];
-  const latestRealisasi = realisasi[realisasi.length - 1];
-  const finalDeviation = (latestPlanning?.targetPersentaseKumulatif || 0) - (latestRealisasi?.realisasiPersentaseKumulatif || 0);
-  const sesuaiTarget = detailData.filter((d) => d.status === "On track").length;
-  const diAtasTarget = detailData.filter((d) => d.status === "Diatas Target").length;
-  const diBawahTarget = detailData.filter((d) => d.status === "Dibawah Target").length;
+  const targetAkhir = latestPlanning?.targetPersentaseKumulatif || 0;
 
   return (
     <div className="space-y-6 p-4">
@@ -341,55 +233,68 @@ export default function KurvaS() {
       <div className="grid gap-4 md:grid-cols-4">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Progres Akhir (Planning)</CardTitle>
+            <CardTitle className="text-sm font-medium">Rencana Minggu Ini</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">{latestPlanning?.targetPersentaseKumulatif.toFixed(1)}%</div>
-            <p className="text-xs text-muted-foreground mt-1">Target akhir</p>
+            <div className="text-3xl font-bold text-blue-600">{rencanaMingguIni.toFixed(3)}%</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Minggu ke-{currentWeek?.minggu ?? "-"} (Kum Plan)
+            </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Progres Akhir (Realisasi)</CardTitle>
+            <CardTitle className="text-sm font-medium">Realisasi Minggu Ini</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">{latestRealisasi?.realisasiPersentaseKumulatif.toFixed(1)}%</div>
-            <p className="text-xs text-muted-foreground mt-1">Realisasi saat ini</p>
+            <div className="text-3xl font-bold text-red-600">{realisasiMingguIni.toFixed(3)}%</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Minggu ke-{currentWeek?.minggu ?? "-"} (Kum Real)
+            </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Deviasi Akhir</CardTitle>
+            <CardTitle className="text-sm font-medium">Deviasi</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className={`text-3xl font-bold ${finalDeviation < 0 ? "text-green-600" : finalDeviation > 0 ? "text-red-600" : "text-gray-600"}`}>
-              {finalDeviation > 0 ? "+" : ""}
-              {finalDeviation.toFixed(3)}%
+            <div
+              className={`text-3xl font-bold ${
+                deviasiMingguIni > 0
+                  ? "text-green-600"
+                  : deviasiMingguIni < 0
+                    ? "text-red-600"
+                    : "text-gray-600"
+              }`}
+            >
+              {deviasiMingguIni > 0 ? "+" : ""}
+              {deviasiMingguIni.toFixed(3)}%
             </div>
-            <p className="text-xs text-muted-foreground mt-1">Selisih progres</p>
+            <p className="text-xs text-muted-foreground mt-1">Kum Real − Kum Plan</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Status Minggu</CardTitle>
+            <CardTitle className="text-sm font-medium">Status Mingguan</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex gap-2 mt-2">
-              <Badge variant="outline" className="bg-blue-50">
+            <div className="flex flex-wrap gap-2 mt-2">
+              <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
                 {sesuaiTarget} On track
               </Badge>
-            </div>
-            <div className="flex gap-2 mt-2">
-              <Badge variant="outline" className="bg-green-50">
-                {diAtasTarget} Diatas Target
+              <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                {diAtasTarget} Diatas
               </Badge>
-              <Badge variant="outline" className="bg-red-50">
-                {diBawahTarget} Dibawah Target
+              <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
+                {diBawahTarget} Dibawah
               </Badge>
             </div>
+            <p className="text-xs text-muted-foreground mt-2">
+              {evaluated.length} dari {planning.length} minggu terevaluasi
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -398,7 +303,7 @@ export default function KurvaS() {
       <Card>
         <CardHeader>
           <CardTitle>Grafik Perbandingan Kurva S</CardTitle>
-          <CardDescription>Perbandingan persentase kumulatif Planning vs Realisasi</CardDescription>
+          <CardDescription>Perbandingan persentase kumulatif Target vs Realisasi</CardDescription>
         </CardHeader>
         <CardContent>
           <ResponsiveContainer width="100%" height={600}>
@@ -415,38 +320,30 @@ export default function KurvaS() {
                 type="monotone"
                 dataKey="planning"
                 stroke="#3b82f6"
-                strokeWidth={7}
+                strokeWidth={5}
                 dot={false}
                 name="Target (Planning)"
               />
               <Line
                 type="monotone"
                 dataKey="realisasi"
-                stroke="#f97316"
-                strokeWidth={2}
+                stroke="#dc2626"
+                strokeWidth={6}
                 dot={false}
-                name="Realisasi (Pengawas)"
-              />
-              <Line
-                type="monotone"
-                dataKey="realisasiPelaksana"
-                stroke="#9333ea"
-                strokeWidth={2}
-                dot={false}
-                name="Realisasi (Pelaksana)"
+                name="Realisasi"
               />
             </LineChart>
           </ResponsiveContainer>
         </CardContent>
       </Card>
 
-      {/* Main Detail Table */}
+      {/* Tabel Perbandingan Kurva S */}
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>Detail Progres Mingguan (Pengawas)</CardTitle>
-              <CardDescription>Analisis mendalam per minggu berdasarkan hitungan Pengawas</CardDescription>
+              <CardTitle>Tabel Perbandingan Kurva S</CardTitle>
+              <CardDescription>Perbandingan target planning dan realisasi per minggu</CardDescription>
             </div>
             <button
               onClick={() => setSortBy(sortBy === "minggu" ? "deviasi" : "minggu")}
@@ -468,7 +365,7 @@ export default function KurvaS() {
                   <TableHead className="text-center">Kum Plan</TableHead>
                   <TableHead className="text-center">Kum Real</TableHead>
                   <TableHead className="text-center">Deviasi</TableHead>
-                  <TableHead>Kendala & Solusi</TableHead>
+                  <TableHead className="text-center">Laporan Pengawas</TableHead>
                   <TableHead>Status</TableHead>
                 </TableRow>
               </TableHeader>
@@ -478,7 +375,7 @@ export default function KurvaS() {
                     <TableCell className="font-medium">{row.minggu}</TableCell>
                     <TableCell>
                       <div className="space-y-1">
-                        <div className="text-sm font-medium">{row.pekerjaan || row.deskripsi}</div>
+                        <div className="text-sm font-medium">{row.pekerjaan !== "-" ? row.pekerjaan : row.deskripsi}</div>
                         <div className="text-xs text-muted-foreground">
                           {row.tanggalAwal && row.tanggalAkhir
                             ? `${formatDateIndo(row.tanggalAwal)} sd ${formatDateIndo(row.tanggalAkhir)}`
@@ -487,11 +384,15 @@ export default function KurvaS() {
                       </div>
                     </TableCell>
                     <TableCell className="text-center text-sm">{row.plan_persen.toFixed(3)}%</TableCell>
-                    <TableCell className="text-center text-sm">{row.real_persen.toFixed(3)}%</TableCell>
+                    <TableCell className="text-center text-sm">
+                      {row.hasRealisasi ? `${row.real_persen.toFixed(3)}%` : <span className="text-muted-foreground">-</span>}
+                    </TableCell>
                     <TableCell className="text-center text-sm font-medium">{row.plan_kumulatif.toFixed(3)}%</TableCell>
-                    <TableCell className="text-center text-sm font-medium">{row.real_kumulatif.toFixed(3)}%</TableCell>
+                    <TableCell className="text-center text-sm font-medium">
+                      {row.hasRealisasi ? `${row.real_kumulatif.toFixed(3)}%` : <span className="text-muted-foreground">-</span>}
+                    </TableCell>
                     <TableCell className="text-center">
-                      {row.hasRealisasiPengawas ? (
+                      {row.hasRealisasi ? (
                         <span
                           className={`text-sm font-medium ${
                             row.deviation > 0
@@ -508,37 +409,24 @@ export default function KurvaS() {
                         <span className="text-muted-foreground text-sm">-</span>
                       )}
                     </TableCell>
-                    <TableCell className="text-xs text-muted-foreground max-w-[200px]">
-                      {row.kendala !== "-" || row.solusi !== "-" ? (
-                        <>
-                          {row.kendala !== "-" && (
-                            <span>
-                              <span className="font-semibold text-red-600">K: </span>
-                              {row.kendala}
-                            </span>
-                          )}
-                          {row.kendala !== "-" && row.solusi !== "-" && <br />}
-                          {row.solusi !== "-" && (
-                            <span>
-                              <span className="font-semibold text-green-600">S: </span>
-                              {row.solusi}
-                            </span>
-                          )}
-                        </>
+                    <TableCell className="text-center">
+                      {row.linkLaporanPengawas && row.linkLaporanPengawas !== "-" ? (
+                        <a
+                          href={row.linkLaporanPengawas}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:underline text-sm"
+                        >
+                          Laporan →
+                        </a>
                       ) : (
-                        <span className="text-muted-foreground">-</span>
+                        <span className="text-muted-foreground text-sm">-</span>
                       )}
                     </TableCell>
                     <TableCell>
-                      {row.hasRealisasiPengawas ? (
+                      {row.hasRealisasi ? (
                         <Badge
-                          variant={
-                            row.status === "On track"
-                              ? "outline"
-                              : row.status === "Diatas Target"
-                                ? "secondary"
-                                : "destructive"
-                          }
+                          variant="outline"
                           className={
                             row.status === "On track"
                               ? "bg-blue-50 text-blue-700 border-blue-200"
@@ -561,174 +449,52 @@ export default function KurvaS() {
         </CardContent>
       </Card>
 
-      {/* Detail Progres Mingguan (Pelaksana) */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Detail Progres Mingguan (Pelaksana)</CardTitle>
-          <CardDescription>Analisis mendalam per minggu berdasarkan hitungan Kontraktor Pelaksana</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-12">Mgg</TableHead>
-                  <TableHead>Tahapan / Pekerjaan</TableHead>
-                  <TableHead className="text-center">Plan %</TableHead>
-                  <TableHead className="text-center">Real %</TableHead>
-                  <TableHead className="text-center">Kum Plan</TableHead>
-                  <TableHead className="text-center">Kum Real</TableHead>
-                  <TableHead className="text-center">Deviasi</TableHead>
-                  <TableHead>Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {sortedDetail.map((row) => (
-                  <TableRow key={row.minggu}>
-                    <TableCell className="font-medium">{row.minggu}</TableCell>
-                    <TableCell>
-                      <div className="space-y-1">
-                        <div className="text-sm font-medium">{row.pekerjaan || row.deskripsi}</div>
-                        <div className="text-xs text-muted-foreground">
-                          {row.tanggalAwal && row.tanggalAkhir
-                            ? `${formatDateIndo(row.tanggalAwal)} sd ${formatDateIndo(row.tanggalAkhir)}`
-                            : "-"}
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-center text-sm">{row.plan_persen.toFixed(3)}%</TableCell>
-                    <TableCell className="text-center text-sm">{row.real_persen_pelaksana.toFixed(3)}%</TableCell>
-                    <TableCell className="text-center text-sm font-medium">{row.plan_kumulatif.toFixed(3)}%</TableCell>
-                    <TableCell className="text-center text-sm font-medium text-purple-700">{row.real_kumulatif_pelaksana.toFixed(3)}%</TableCell>
-                    <TableCell className="text-center">
-                      {row.hasRealisasiPelaksana ? (
-                        <span
-                          className={`text-sm font-medium ${
-                            row.deviation_pelaksana > 0
-                              ? "text-green-600"
-                              : row.deviation_pelaksana < 0
-                                ? "text-red-600"
-                                : "text-gray-600"
-                          }`}
-                        >
-                          {row.deviation_pelaksana > 0 ? "+" : ""}
-                          {row.deviation_pelaksana.toFixed(3)}%
-                        </span>
-                      ) : (
-                        <span className="text-muted-foreground text-sm">-</span>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {row.hasRealisasiPelaksana ? (
-                        <Badge
-                          variant={
-                            row.status_pelaksana === "On track"
-                              ? "outline"
-                              : row.status_pelaksana === "Diatas Target"
-                                ? "secondary"
-                                : "destructive"
-                          }
-                          className={
-                            row.status_pelaksana === "On track"
-                              ? "bg-blue-50 text-blue-700 border-blue-200"
-                              : row.status_pelaksana === "Diatas Target"
-                                ? "bg-green-50 text-green-700 border-green-200"
-                                : "bg-red-50 text-red-700 border-red-200"
-                          }
-                        >
-                          {row.status_pelaksana}
-                        </Badge>
-                      ) : (
-                        <span className="text-muted-foreground text-sm">-</span>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Realisasi Details Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Detail Realisasi & PIC</CardTitle>
-          <CardDescription>Informasi detail pekerjaan realisasi, PIC, dan dokumentasi</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-12">Mgg</TableHead>
-                  <TableHead>Pekerjaan Minggu</TableHead>
-                  <TableHead className="text-center whitespace-normal break-words max-w-[100px]">Realisasi Minggu</TableHead>
-                  <TableHead className="text-center whitespace-normal break-words max-w-[120px]">Realisasi Kumulatif</TableHead>
-                  <TableHead>Kendala & Solusi</TableHead>
-                  <TableHead>PIC</TableHead>
-                  <TableHead className="whitespace-normal break-words max-w-[100px]">Link</TableHead>
-                  <TableHead className="whitespace-normal break-words max-w-[120px]">Laporan Pengawas</TableHead>
-                  <TableHead className="whitespace-normal break-words max-w-[120px]">Laporan Pelaksana</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {realisasiRows}
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Statistics Summary */}
+      {/* Ringkasan Statistik */}
       <Card>
         <CardHeader>
           <CardTitle>Ringkasan Statistik</CardTitle>
+          <CardDescription>Rekapitulasi progres konstruksi secara keseluruhan</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-4 md:grid-cols-4">
-            <div className="space-y-2">
-              <p className="text-sm font-medium text-muted-foreground">Total Minggu</p>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <div className="rounded-lg border p-4 space-y-1">
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Total Minggu</p>
               <p className="text-2xl font-bold">{planning.length}</p>
+              <p className="text-xs text-muted-foreground">
+                {evaluated.length} minggu terealisasi
+              </p>
             </div>
-            <div className="space-y-2">
-              <p className="text-sm font-medium text-muted-foreground">Rata-rata Deviasi</p>
+            <div className="rounded-lg border p-4 space-y-1">
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Target Akhir</p>
+              <p className="text-2xl font-bold text-blue-600">{targetAkhir.toFixed(3)}%</p>
+              <p className="text-xs text-muted-foreground">Kumulatif planning akhir</p>
+            </div>
+            <div className="rounded-lg border p-4 space-y-1">
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Rata-rata Deviasi</p>
               <p
                 className={`text-2xl font-bold ${
-                  (() => {
-                    const avgDeviation =
-                      detailData.length > 0
-                        ? detailData.reduce((sum, d) => sum + d.deviation, 0) / detailData.length
-                        : 0;
-                    return avgDeviation >= 0 ? "text-green-600" : "text-red-600";
-                  })()
+                  avgDeviation >= 0 ? "text-green-600" : "text-red-600"
                 }`}
               >
-                {(
-                  detailData.reduce((sum, d) => sum + d.deviation, 0) / detailData.length
-                ).toFixed(2)}
-                %
+                {avgDeviation > 0 ? "+" : ""}
+                {avgDeviation.toFixed(3)}%
               </p>
+              <p className="text-xs text-muted-foreground">Dari {evaluated.length} minggu</p>
             </div>
-            <div className="space-y-2">
-              <p className="text-sm font-medium text-muted-foreground">Max Deviasi</p>
-              <p className="text-2xl font-bold text-green-600">
-                {Math.max(
-                  ...detailData.map((d) => Math.abs(d.deviation))
-                ).toFixed(2)}
-                %
-              </p>
-            </div>
-            <div className="space-y-2">
-              <p className="text-sm font-medium text-muted-foreground">Min Deviasi</p>
-              <p className="text-2xl font-bold text-red-600">
-                {(() => {
-                  const validDeviations = detailData.map((d) => d.deviation).filter(val => !isNaN(val) && isFinite(val));
-                  const minDeviation = validDeviations.length > 0 ? Math.min(...validDeviations) : 0;
-                  return minDeviation.toFixed(2);
-                })()}
-                %
-              </p>
+            <div className="rounded-lg border p-4 space-y-1">
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Rentang Deviasi</p>
+              <div className="flex items-baseline gap-2">
+                <span className="text-lg font-bold text-red-600">
+                  {minDeviation > 0 ? "+" : ""}
+                  {minDeviation.toFixed(3)}%
+                </span>
+                <span className="text-muted-foreground">—</span>
+                <span className="text-lg font-bold text-green-600">
+                  {maxDeviation > 0 ? "+" : ""}
+                  {maxDeviation.toFixed(3)}%
+                </span>
+              </div>
+              <p className="text-xs text-muted-foreground">Min — Max deviasi</p>
             </div>
           </div>
         </CardContent>
