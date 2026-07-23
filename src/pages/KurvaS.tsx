@@ -461,9 +461,9 @@ export default function KurvaS() {
               </p>
             </div>
             <div className="rounded-lg border p-4 space-y-1">
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Target Akhir</p>
-              <p className="text-2xl font-bold text-blue-600">{targetAkhir.toFixed(3)}%</p>
-              <p className="text-xs text-muted-foreground">Kumulatif planning akhir</p>
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Sisa Target</p>
+              <p className="text-2xl font-bold text-blue-600">{(100 - realisasiMingguIni).toFixed(3)}%</p>
+              <p className="text-xs text-muted-foreground">100% − Kum Real minggu ke-{currentWeek?.minggu ?? "-"}</p>
             </div>
             <div className="rounded-lg border p-4 space-y-1">
               <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Rata-rata Deviasi</p>
