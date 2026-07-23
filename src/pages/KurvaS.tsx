@@ -173,7 +173,7 @@ export default function KurvaS() {
         <div className="mt-1">
           {payload.map((entry: any) => {
             const valueClass =
-              entry.dataKey === "planning" ? "text-blue-600" : "text-red-600";
+              entry.dataKey === "planning" ? "text-blue-600" : "text-orange-700";
             return (
               <div key={entry.dataKey} className="flex justify-between gap-2">
                 <span className="font-medium">{entry.name}</span>
@@ -244,7 +244,9 @@ export default function KurvaS() {
             <CardTitle className="text-sm font-medium">Realisasi Minggu Ini</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-red-600">{realisasiMingguIni.toFixed(3)}%</div>
+            <div className="text-3xl font-bold" style={{ color: "#C65D1A" }}>
+              {realisasiMingguIni.toFixed(3)}%
+            </div>
             <p className="text-xs text-muted-foreground mt-1">
               Minggu ke-{currentWeek?.minggu ?? "-"} (Kum Real)
             </p>
@@ -323,7 +325,7 @@ export default function KurvaS() {
               <Line
                 type="monotone"
                 dataKey="realisasi"
-                stroke="#dc2626"
+                stroke="#C65D1A"
                 strokeWidth={6}
                 dot={false}
                 name="Realisasi"
