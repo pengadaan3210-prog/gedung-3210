@@ -803,17 +803,6 @@ const JadwalMonitoring = () => {
               <Table>
                 <TableHeader>
                   <TableRow className="bg-muted/30">
-                    <TableHead 
-                      className="w-14 text-center cursor-pointer hover:bg-muted/60"
-                      onClick={() => handleSortColumn("no")}
-                    >
-                      <div className="flex items-center justify-center gap-1">
-                        No
-                        {sortColumn === "no" && (
-                          sortDirection === "asc" ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />
-                        )}
-                      </div>
-                    </TableHead>
                     <TableHead className="w-24">Hari ke-</TableHead>
                     <TableHead 
                       className="w-32 cursor-pointer hover:bg-muted/60"
@@ -879,13 +868,10 @@ const JadwalMonitoring = () => {
                     const hasLink = !!item.link_dokumen_bukti;
                     return (
                       <TableRow 
-                        key={item.no || index}
+                        key={index}
                         className="cursor-pointer hover:bg-muted/50 transition-colors"
                         onClick={() => handleOpenDetailModal(item)}
                       >
-                        <TableCell className="text-center font-medium text-muted-foreground">
-                          {item.no || startIndex + index + 1}
-                        </TableCell>
                         <TableCell className="font-medium">{item.hari_ke_x || "-"}</TableCell>
                         <TableCell className="w-32">
                           {item.tanggal ? (
