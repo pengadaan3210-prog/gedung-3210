@@ -63,7 +63,7 @@ const JadwalMonitoring = () => {
   const ITEMS_PER_PAGE = 10;
 
   // Sort state
-  const [sortColumn, setSortColumn] = useState<string | null>("no");
+  const [sortColumn, setSortColumn] = useState<string | null>("hari_ke_x");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
 
   // Filter state
@@ -216,10 +216,6 @@ const JadwalMonitoring = () => {
     let bVal: any = "";
 
     switch (sortColumn) {
-      case "no":
-        aVal = parseInt(a.no || a.__rowNumber || a.rowNumber || "0", 10);
-        bVal = parseInt(b.no || b.__rowNumber || b.rowNumber || "0", 10);
-        break;
       case "mingguKe":
         aVal = a.mingguKe || 0;
         bVal = b.mingguKe || 0;
