@@ -268,7 +268,7 @@ export default function KurvaS() {
               {deviasiMingguIni > 0 ? "+" : ""}
               {deviasiMingguIni.toFixed(3)}%
             </div>
-            <p className="text-xs text-muted-foreground mt-1">Kum Real − Kum Plan</p>
+            <p className="text-xs text-muted-foreground mt-1">Realisasi kumulatif - Rencana kumulatif</p>
           </CardContent>
         </Card>
 
