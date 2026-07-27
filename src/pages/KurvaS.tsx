@@ -229,24 +229,24 @@ export default function KurvaS() {
       <div className="grid gap-4 md:grid-cols-4">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Rencana Minggu Ini</CardTitle>
+            <CardTitle className="text-sm font-medium">Rencana s.d Minggu Ini</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-blue-600">{rencanaMingguIni.toFixed(3)}%</div>
             <p className="text-xs text-muted-foreground mt-1">
-              Minggu ke-{currentWeek?.minggu ?? "-"} (Kum Plan)
+              Minggu ke-{currentWeek?.minggu ?? "-"}
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Realisasi Minggu Ini</CardTitle>
+            <CardTitle className="text-sm font-medium">Realisasi s.d Minggu Ini</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-red-600">{realisasiMingguIni.toFixed(3)}%</div>
             <p className="text-xs text-muted-foreground mt-1">
-              Minggu ke-{currentWeek?.minggu ?? "-"} (Kum Real)
+              Minggu ke-{currentWeek?.minggu ?? "-"}
             </p>
           </CardContent>
         </Card>
@@ -268,7 +268,7 @@ export default function KurvaS() {
               {deviasiMingguIni > 0 ? "+" : ""}
               {deviasiMingguIni.toFixed(3)}%
             </div>
-            <p className="text-xs text-muted-foreground mt-1">Kum Real − Kum Plan</p>
+            <p className="text-xs text-muted-foreground mt-1">Realisasi kumulatif - Rencana kumulatif</p>
           </CardContent>
         </Card>
 
@@ -463,7 +463,6 @@ export default function KurvaS() {
             <div className="rounded-lg border p-4 space-y-1">
               <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Sisa Target</p>
               <p className="text-2xl font-bold text-blue-600">{(100 - realisasiMingguIni).toFixed(3)}%</p>
-              <p className="text-xs text-muted-foreground">100% − Kum Real minggu ke-{currentWeek?.minggu ?? "-"}</p>
             </div>
             <div className="rounded-lg border p-4 space-y-1">
               <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Rata-rata Deviasi</p>
