@@ -229,12 +229,12 @@ export default function KurvaS() {
       <div className="grid gap-4 md:grid-cols-4">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Rencana Minggu Ini</CardTitle>
+            <CardTitle className="text-sm font-medium">Rencana s.d Minggu Ini</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-blue-600">{rencanaMingguIni.toFixed(3)}%</div>
             <p className="text-xs text-muted-foreground mt-1">
-              Minggu ke-{currentWeek?.minggu ?? "-"} (Kum Plan)
+              Minggu ke-{currentWeek?.minggu ?? "-"}
             </p>
           </CardContent>
         </Card>
