@@ -241,12 +241,12 @@ export default function KurvaS() {
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Realisasi Minggu Ini</CardTitle>
+            <CardTitle className="text-sm font-medium">Realisasi s.d Minggu Ini</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-red-600">{realisasiMingguIni.toFixed(3)}%</div>
             <p className="text-xs text-muted-foreground mt-1">
-              Minggu ke-{currentWeek?.minggu ?? "-"} (Kum Real)
+              Minggu ke-{currentWeek?.minggu ?? "-"}
             </p>
           </CardContent>
         </Card>
