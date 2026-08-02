@@ -1,6 +1,6 @@
-import { Kegiatan, Tahapan, StatusProgres } from "@/lib/types";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Building2, ClipboardCheck, AlertTriangle, Clock, CheckCircle2, TrendingUp } from "lucide-react";
+import { Kegiatan } from "@/lib/types";
+import { Card, CardContent } from "@/components/ui/card";
+import { FileText, CheckCircle2, XCircle, TrendingUp } from "lucide-react";
 
 interface StatsCardsProps {
   data: Kegiatan[];
@@ -8,23 +8,19 @@ interface StatsCardsProps {
 
 const StatsCards = ({ data }: StatsCardsProps) => {
   const total = data.length;
-  const selesai = data.filter((d) => d.statusProgres === "Selesai").length;
-  const proses = data.filter((d) => d.statusProgres === "Proses").length;
-  const tertunda = data.filter((d) => d.statusProgres === "Tertunda").length;
-  const belum = data.filter((d) => d.statusProgres === "Belum").length;
-  const avgProgress = Math.round(data.reduce((s, d) => s + d.persentaseProgres, 0) / total);
+  const terpenuhi = data.filter((d) => d.status).length;
+  const belum = total - terpenuhi;
+  const persen = total ? Math.round((terpenuhi / total) * 100) : 0;
 
   const cards = [
-    { title: "Total Kegiatan", value: total, icon: Building2, className: "bg-primary text-primary-foreground" },
-    { title: "Progres Rata-rata", value: `${avgProgress}%`, icon: TrendingUp, className: "bg-accent text-accent-foreground" },
-    { title: "Selesai", value: selesai, icon: CheckCircle2, className: "bg-success text-success-foreground" },
-    { title: "Dalam Proses", value: proses, icon: Clock, className: "bg-info text-info-foreground" },
-    { title: "Tertunda", value: tertunda, icon: AlertTriangle, className: "bg-warning text-warning-foreground" },
-    { title: "Belum Dimulai", value: belum, icon: ClipboardCheck, className: "bg-muted text-muted-foreground" },
+    { title: "Total Dokumen", value: total, icon: FileText, className: "bg-primary text-primary-foreground" },
+    { title: "Kelengkapan", value: `${persen}%`, icon: TrendingUp, className: "bg-accent text-accent-foreground" },
+    { title: "Terpenuhi", value: terpenuhi, icon: CheckCircle2, className: "bg-success text-success-foreground" },
+    { title: "Belum Terpenuhi", value: belum, icon: XCircle, className: "bg-warning text-warning-foreground" },
   ];
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
       {cards.map((card) => (
         <Card key={card.title} className={`${card.className} border-none shadow-md`}>
           <CardContent className="p-4">
