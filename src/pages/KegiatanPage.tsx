@@ -7,30 +7,27 @@ import LoadingState from "@/components/LoadingState";
 import ErrorState from "@/components/ErrorState";
 
 interface KegiatanPageProps {
-  tahapan: string;
+  penanggungjawab: string;
   title: string;
   description: string;
 }
 
-const KegiatanPage = ({ tahapan, title, description }: KegiatanPageProps) => {
+const normalize = (val?: string) => (val || "").trim().toLowerCase();
+
+const KegiatanPage = ({ penanggungjawab, title, description }: KegiatanPageProps) => {
   const [selected, setSelected] = useState<Kegiatan | null>(null);
   const { data: allData, isLoading, isError, refetch } = useKegiatan();
-  
-  // Filter data based on tahapan
-  const normalize = (val?: string) => (val || "").trim().toLowerCase();
-  const data = tahapan === "Semua"
-    ? allData
-    : normalize(tahapan) === "bps kabupaten majalengka"
-    ? allData.filter((d) => normalize(d.penyedia) === "bps kabupaten majalengka")
-    : allData.filter((d) => normalize(d.penyedia) === normalize(tahapan));
+
+  const data =
+    penanggungjawab === "Semua"
+      ? allData
+      : allData.filter((d) => normalize(d.penanggungjawab) === normalize(penanggungjawab));
 
   if (isLoading) return <div className="p-6"><LoadingState /></div>;
   if (isError) return <div className="p-6"><ErrorState onRetry={() => refetch()} /></div>;
 
-  const avg = data.length
-    ? Math.round(data.reduce((s, d) => s + d.persentaseProgres, 0) / data.length)
-    : 0;
-  const selesai = data.filter((d) => d.statusProgres === "Selesai").length;
+  const terpenuhi = data.filter((d) => d.status).length;
+  const persen = data.length ? Math.round((terpenuhi / data.length) * 100) : 0;
 
   return (
     <div className="p-6 space-y-6">
@@ -41,12 +38,12 @@ const KegiatanPage = ({ tahapan, title, description }: KegiatanPageProps) => {
         </div>
         <div className="flex gap-4 text-sm">
           <div className="text-center">
-            <div className="text-2xl font-bold text-accent">{avg}%</div>
-            <div className="text-xs text-muted-foreground">Rata-rata</div>
+            <div className="text-2xl font-bold text-accent">{persen}%</div>
+            <div className="text-xs text-muted-foreground">Kelengkapan</div>
           </div>
           <div className="text-center">
-            <div className="text-2xl font-bold text-success">{selesai}</div>
-            <div className="text-xs text-muted-foreground">Selesai</div>
+            <div className="text-2xl font-bold text-success">{terpenuhi}</div>
+            <div className="text-xs text-muted-foreground">Terpenuhi</div>
           </div>
           <div className="text-center">
             <div className="text-2xl font-bold text-foreground">{data.length}</div>
