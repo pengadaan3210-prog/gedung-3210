@@ -242,6 +242,28 @@ const JadwalMonitoring = () => {
 
   // Apply sort
   const sorted = [...normalizedData].sort((a, b) => {
+    // Default: urutkan berdasarkan tanggal WIB — sudah lewat/hari ini di atas,
+    // tanggal terdekat dengan hari ini lebih dulu, tanggal yang belum lewat di bawah.
+    if (sortColumn === null) {
+      const todayKey = getTodayJakartaKey();
+      const aKey = parseJakartaDateKey(a.tanggal);
+      const bKey = parseJakartaDateKey(b.tanggal);
+      const aPast = aKey <= todayKey;
+      const bPast = bKey <= todayKey;
+
+      if (aPast && !bPast) return -1;
+      if (!aPast && bPast) return 1;
+
+      if (aPast && bPast) {
+        if (aKey !== bKey) return bKey - aKey;
+      }
+      if (aKey !== bKey) return aKey - bKey;
+
+      const aHari = parseInt(a.hari_ke_x || "0", 10) || 0;
+      const bHari = parseInt(b.hari_ke_x || "0", 10) || 0;
+      return aHari - bHari;
+    }
+
     let aVal: any = "";
     let bVal: any = "";
 
