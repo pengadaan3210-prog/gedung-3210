@@ -34,19 +34,9 @@ const App = () => (
               path="/semua"
               element={
                 <KegiatanPage
-                  tahapan="Semua"
-                  title="Semua Kegiatan"
-                  description="Daftar semua kegiatan dari semua penyedia"
-                />
-              }
-            />
-            <Route
-              path="/bps-kabupaten"
-              element={
-                <KegiatanPage
-                  tahapan="BPS Kabupaten Majalengka"
-                  title="BPS Kabupaten Majalengka"
-                  description="Daftar kegiatan oleh BPS Kabupaten Majalengka"
+                  penanggungjawab="Semua"
+                  title="Semua Dokumen"
+                  description="Daftar semua dokumen dari seluruh penanggungjawab"
                 />
               }
             />
@@ -54,9 +44,9 @@ const App = () => (
               path="/perancangan"
               element={
                 <KegiatanPage
-                  tahapan="Perencanaan"
+                  penanggungjawab="Konsultan Perancangan"
                   title="Konsultan Perancangan"
-                  description="Daftar kegiatan perencanaan oleh konsultan perancang"
+                  description="Daftar dokumen yang menjadi tanggung jawab konsultan perancangan"
                 />
               }
             />
@@ -64,9 +54,9 @@ const App = () => (
               path="/konstruksi"
               element={
                 <KegiatanPage
-                  tahapan="Pelaksanaan"
+                  penanggungjawab="Kontraktor Pelaksana"
                   title="Kontraktor Pelaksana"
-                  description="Daftar kegiatan pelaksanaan konstruksi oleh kontraktor"
+                  description="Daftar dokumen yang menjadi tanggung jawab kontraktor pelaksana"
                 />
               }
             />
@@ -74,12 +64,13 @@ const App = () => (
               path="/pengawas"
               element={
                 <KegiatanPage
-                  tahapan="Pengawasan"
+                  penanggungjawab="Konsultan Pengawas"
                   title="Konsultan Pengawas"
-                  description="Daftar kegiatan pengawasan oleh konsultan pengawas"
+                  description="Daftar dokumen yang menjadi tanggung jawab konsultan pengawas"
                 />
               }
             />
+
             <Route path="/dokumentasi" element={<Dokumentasi />} />
             <Route path="/notulen" element={<NotulenPage />} />
             <Route path="/foto-progres" element={<FotoProgresPage />} />

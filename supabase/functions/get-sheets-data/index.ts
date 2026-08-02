@@ -157,38 +157,27 @@ function mapKegiatan(raw: Record<string, string>[]) {
   console.log(`   🔍 Mapping ${raw.length} kegiatan records...`);
   if (raw.length > 0) {
     console.log(`   🔍 First row keys: [${Object.keys(raw[0]).join(', ')}]`);
-    console.log(`   🔍 Sample penanggungjawab values:`);
-    raw.slice(0, 3).forEach((r, i) => {
-      console.log(`      Row ${i}: penanggungjawab="${r.penanggungjawab || '(empty)'}"`);
-    });
   }
-  
-  const mapped = raw.map((r) => ({
-    id: r.id || '',
-    penyedia: (r.penyedia || '').trim(),
-    tahapan: r.tahapan || '',
-    uraianKegiatan: r.uraian_kegiatan || '',
-    output: r.output || '',
-    tanggalMulai: parseDate(r.tanggal_mulai),
-    tanggalSelesai: parseDate(r.tanggal_selesai),
-    statusProgres: (r.status_progres || 'Belum').trim(),
-    persentaseProgres: parseInt(r.persentase_progres) || 0,
-    peranPenyedia: r.peran_penyedia || '',
-    pic: r.pic || '',
-    peranBPSKabupaten: r.peran_bps_kabupaten || '',
-    peranBPSProvinsi: r.peran_bps_provinsi || '',
-    peranPusat: r.peran_pusat || '',
-    linkBuktiDukung: r.link_bukti_dukung || '',
-    keterangan: r.keterangan || '',
-    tindakLanjut: r.tindak_lanjut || '',
-    nomorKontrak: r.nomor_kontrak || '',
-    tanggalUpdateTerakhir: parseDate(r.tanggal_update_terakhir),
-    kendala: r.kendala || '',
-    solusi: r.solusi || '',
-    urutan: parseInt(r.urutan) || 0,
-    penanggungjawab: r.penanggungjawab || '',
-  }));
-  
+
+  const mapped = raw.map((r) => {
+    const statusRaw = (r.status || '').trim().toUpperCase();
+    const statusKeterangan = (r.status_keterangan || r[''] || '').trim();
+    return {
+      id: r.id || '',
+      penanggungjawab: (r.penanggungjawab || '').trim(),
+      tahapan: (r.tahapan || '').trim(),
+      dokumen: (r.dokumen || '').trim(),
+      penyedia: (r.penyedia || '').trim(),
+      namaFile: (r.nama_file || '').trim(),
+      status: statusRaw === 'TRUE' || statusRaw === 'YA' || statusRaw === '1'
+        ? true
+        : statusKeterangan.toLowerCase() === 'terpenuhi',
+      statusKeterangan,
+      keterangan: r.keterangan || '',
+      linkDokumen: (r.link_dokumen || r.link_dokumen_bukti || '').trim(),
+    };
+  });
+
   // Remove duplicates by ID
   const uniqueMap = new Map<string, any>();
   mapped.forEach(item => {
@@ -196,11 +185,12 @@ function mapKegiatan(raw: Record<string, string>[]) {
       uniqueMap.set(item.id, item);
     }
   });
-  
+
   const result = Array.from(uniqueMap.values());
   console.log(`   ✨ Kegiatan deduplicated: ${mapped.length} → ${result.length} unique records`);
   return result;
 }
+
 
 function mapVisualisasi(raw: Record<string, string>[]) {
   return raw.map((r) => ({

@@ -38,11 +38,11 @@ const mainMenu = [
 
 const todoMenu = [
   { title: "Semua", url: "/semua", icon: LayoutDashboard },
-  { title: "BPS Kabupaten Majalengka", url: "/bps-kabupaten", icon: Building2 },
   { title: "Konsultan Perancangan", url: "/perancangan", icon: PenTool },
   { title: "Kontraktor Pelaksana", url: "/konstruksi", icon: HardHat },
   { title: "Konsultan Pengawas", url: "/pengawas", icon: Eye },
 ];
+
 
 const progresMenu = [
   { title: "Kurva S", url: "/kurva-s", icon: TrendingUp },
