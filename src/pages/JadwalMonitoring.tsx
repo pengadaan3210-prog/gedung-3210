@@ -62,8 +62,8 @@ const JadwalMonitoring = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 10;
 
-  // Sort state
-  const [sortColumn, setSortColumn] = useState<string | null>("hari_ke_x");
+  // Sort state — default: tanggal terdekat / sudah lewat di atas (WIB)
+  const [sortColumn, setSortColumn] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
 
   // Filter state
@@ -77,6 +77,36 @@ const JadwalMonitoring = () => {
     const m = s?.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
     if (m) return new Date(parseInt(m[3]), parseInt(m[2]) - 1, parseInt(m[1]));
     return new Date(s);
+  };
+
+  // Helper: buat key YYYYMMDD berdasarkan zona waktu Asia/Jakarta (WIB)
+  const parseJakartaDateKey = (dateStr: string): number => {
+    const parts = dateStr?.split(/[\/\-]/);
+    if (parts && parts.length === 3) {
+      const [dd, mm, yyyy] = parts.map((p) => parseInt(p, 10));
+      const d = new Date(Date.UTC(yyyy, mm - 1, dd));
+      const fmt = new Intl.DateTimeFormat("id-ID", {
+        timeZone: "Asia/Jakarta",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+      });
+      const p = Object.fromEntries(fmt.formatToParts(d).map((part) => [part.type, part.value]));
+      return parseInt(`${p.year}${p.month}${p.day}`, 10);
+    }
+    return 0;
+  };
+
+  const getTodayJakartaKey = (): number => {
+    const now = new Date();
+    const fmt = new Intl.DateTimeFormat("id-ID", {
+      timeZone: "Asia/Jakarta",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    });
+    const p = Object.fromEntries(fmt.formatToParts(now).map((part) => [part.type, part.value]));
+    return parseInt(`${p.year}${p.month}${p.day}`, 10);
   };
 
   // Helper function untuk parse ISO date string dan normalize ke midnight
@@ -212,6 +242,28 @@ const JadwalMonitoring = () => {
 
   // Apply sort
   const sorted = [...normalizedData].sort((a, b) => {
+    // Default: urutkan berdasarkan tanggal WIB — sudah lewat/hari ini di atas,
+    // tanggal terdekat dengan hari ini lebih dulu, tanggal yang belum lewat di bawah.
+    if (sortColumn === null) {
+      const todayKey = getTodayJakartaKey();
+      const aKey = parseJakartaDateKey(a.tanggal);
+      const bKey = parseJakartaDateKey(b.tanggal);
+      const aPast = aKey <= todayKey;
+      const bPast = bKey <= todayKey;
+
+      if (aPast && !bPast) return -1;
+      if (!aPast && bPast) return 1;
+
+      if (aPast && bPast) {
+        if (aKey !== bKey) return bKey - aKey;
+      }
+      if (aKey !== bKey) return aKey - bKey;
+
+      const aHari = parseInt(a.hari_ke_x || "0", 10) || 0;
+      const bHari = parseInt(b.hari_ke_x || "0", 10) || 0;
+      return aHari - bHari;
+    }
+
     let aVal: any = "";
     let bVal: any = "";
 
