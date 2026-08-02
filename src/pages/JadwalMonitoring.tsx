@@ -79,6 +79,36 @@ const JadwalMonitoring = () => {
     return new Date(s);
   };
 
+  // Helper: buat key YYYYMMDD berdasarkan zona waktu Asia/Jakarta (WIB)
+  const parseJakartaDateKey = (dateStr: string): number => {
+    const parts = dateStr?.split(/[\/\-]/);
+    if (parts && parts.length === 3) {
+      const [dd, mm, yyyy] = parts.map((p) => parseInt(p, 10));
+      const d = new Date(Date.UTC(yyyy, mm - 1, dd));
+      const fmt = new Intl.DateTimeFormat("id-ID", {
+        timeZone: "Asia/Jakarta",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+      });
+      const p = Object.fromEntries(fmt.formatToParts(d).map((part) => [part.type, part.value]));
+      return parseInt(`${p.year}${p.month}${p.day}`, 10);
+    }
+    return 0;
+  };
+
+  const getTodayJakartaKey = (): number => {
+    const now = new Date();
+    const fmt = new Intl.DateTimeFormat("id-ID", {
+      timeZone: "Asia/Jakarta",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    });
+    const p = Object.fromEntries(fmt.formatToParts(now).map((part) => [part.type, part.value]));
+    return parseInt(`${p.year}${p.month}${p.day}`, 10);
+  };
+
   // Helper function untuk parse ISO date string dan normalize ke midnight
   const parseISODate = (isoStr: string): Date => {
     const [year, month, day] = isoStr.split('-');
