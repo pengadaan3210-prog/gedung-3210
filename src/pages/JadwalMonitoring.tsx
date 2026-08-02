@@ -62,8 +62,8 @@ const JadwalMonitoring = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 10;
 
-  // Sort state
-  const [sortColumn, setSortColumn] = useState<string | null>("hari_ke_x");
+  // Sort state — default: tanggal terdekat / sudah lewat di atas (WIB)
+  const [sortColumn, setSortColumn] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
 
   // Filter state
