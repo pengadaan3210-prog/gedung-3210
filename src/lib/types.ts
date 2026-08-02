@@ -1,31 +1,22 @@
-export type Tahapan = "Perencanaan" | "Pelaksanaan" | "Pengawasan";
-export type StatusProgres = "Belum" | "Proses" | "Selesai" | "Tertunda";
+export type Tahapan = string;
+export type Penanggungjawab =
+  | "Konsultan Perancangan"
+  | "Kontraktor Pelaksana"
+  | "Konsultan Pengawas";
 
 export interface Kegiatan {
   id: string;
-  penyedia?: string;
-  tahapan: Tahapan;
-  uraianKegiatan: string;
-  output: string;
-  tanggalMulai: string;
-  tanggalSelesai: string;
-  statusProgres: StatusProgres;
-  persentaseProgres: number;
-  peranPenyedia: string;
-  pic: string;
-  peranBPSKabupaten: string;
-  peranBPSProvinsi: string;
-  peranPusat: string;
-  linkBuktiDukung: string;
+  penanggungjawab: string;
+  tahapan: string;
+  dokumen: string;
+  penyedia: string;
+  namaFile: string;
+  status: boolean;
+  statusKeterangan: string;
   keterangan: string;
-  tindakLanjut: string;
-  nomorKontrak: string;
-  tanggalUpdateTerakhir: string;
-  kendala?: string;
-  solusi?: string;
-  urutan?: number;
-  penanggungjawab?: string;
+  linkDokumen: string;
 }
+
 
 export interface Visualisasi {
   id: string;
